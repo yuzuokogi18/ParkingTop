@@ -1,5 +1,7 @@
 package com.example.parkingtop.core.di.navigation
 
+
+
 object AppRoutes {
     const val WELCOME = "welcome"
     const val LOGIN = "login"

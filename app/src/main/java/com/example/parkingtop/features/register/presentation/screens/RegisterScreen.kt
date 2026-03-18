@@ -1,6 +1,5 @@
 package com.example.parkingtop.features.register.presentation.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Email
@@ -23,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -33,15 +30,20 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.parkingtop.R
+import com.example.parkingtop.features.register.presentation.components.RegisterField
+import com.example.parkingtop.features.register.presentation.components.RoleCard
+import com.example.parkingtop.features.register.presentation.viewmodels.RegisterViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onRegisterClick: () -> Unit = {},
-    onLoginClick: () -> Unit = {}
+    onRegisterSuccess: () -> Unit = {},
+    onLoginClick: () -> Unit = {},
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -49,6 +51,14 @@ fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("Cliente") }
+
+    val state by viewModel.state
+
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            onRegisterSuccess()
+        }
+    }
 
     Scaffold(
         containerColor = Color.White,
@@ -117,7 +127,14 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // NOMBRE COMPLETO
+            if (state.error != null) {
+                Text(
+                    text = state.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+
             RegisterField(
                 label = "Nombre Completo",
                 value = name,
@@ -213,18 +230,32 @@ fun RegisterScreen(
 
             // BOTÓN REGISTRO
             Button(
-                onClick = onRegisterClick,
+                onClick = {
+                    val role = if (selectedRole == "Cliente") "customer" else "owner"
+                    viewModel.register(
+                        email = email,
+                        password = password,
+                        fullName = name,
+                        phone = phone.ifEmpty { null },
+                        role = role
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BlueSecondary)
+                colors = ButtonDefaults.buttonColors(containerColor = BlueSecondary),
+                enabled = !state.isLoading
             ) {
-                Text(
-                    "Registrarme ahora",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
-                )
+                if (state.isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text(
+                        "Registrarme ahora",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -242,79 +273,6 @@ fun RegisterScreen(
                     modifier = Modifier.clickable { onLoginClick() }
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun RegisterField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    leadingIcon: ImageVector
-) {
-    Text(
-        label,
-        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-        color = TextPrimary
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = Color.LightGray) },
-        leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = Color.Gray) },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary,
-            unfocusedBorderColor = Color(0xFFEEEEEE),
-            focusedBorderColor = BlueSecondary
-        )
-    )
-}
-
-@Composable
-fun RoleCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    icon: ImageVector,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val borderColor = if (isSelected) BlueSecondary else Color(0xFFEEEEEE)
-    val backgroundColor = if (isSelected) BlueSecondary.copy(alpha = 0.05f) else Color.White
-    val contentColor = if (isSelected) BlueSecondary else Color.Gray
-
-    Card(
-        modifier = modifier
-            .height(100.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(if (isSelected) 2.dp else 1.dp, borderColor),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
         }
     }
 }

@@ -17,7 +17,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            // Forzamos darkTheme = false para que siempre se vea blanco independientemente del sistema
             ParkingTopTheme(darkTheme = false) {
                 AppNavigation()
             }
