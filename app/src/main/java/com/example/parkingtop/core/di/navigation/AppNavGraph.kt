@@ -1,7 +1,5 @@
 package com.example.parkingtop.core.di.navigation
 
-
-
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.*
 import androidx.navigation.compose.NavHost
@@ -32,14 +30,22 @@ fun AppNavigation() {
 
         composable(AppRoutes.LOGIN) {
             LoginScreen(
-                onLoginClick = { navController.navigate(AppRoutes.SUBSCRIPTION) },
+                onLoginSuccess = { 
+                    navController.navigate(AppRoutes.SUBSCRIPTION) {
+                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                    }
+                },
                 onRegisterClick = { navController.navigate(AppRoutes.REGISTER) }
             )
         }
 
         composable(AppRoutes.REGISTER) {
             RegisterScreen(
-                onRegisterClick = { navController.navigate(AppRoutes.SUBSCRIPTION) },
+                onRegisterSuccess = { 
+                    navController.navigate(AppRoutes.SUBSCRIPTION) {
+                        popUpTo(AppRoutes.REGISTER) { inclusive = true }
+                    }
+                },
                 onLoginClick = { navController.navigate(AppRoutes.LOGIN) }
             )
         }
