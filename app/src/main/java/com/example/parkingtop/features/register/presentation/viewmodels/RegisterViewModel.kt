@@ -14,7 +14,8 @@ import javax.inject.Inject
 data class RegisterState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val role: String? = null
 )
 
 @HiltViewModel
@@ -36,7 +37,7 @@ class RegisterViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value = RegisterState(isLoading = true)
-            
+
             val result = registerUseCase(
                 email = email,
                 password = password,
@@ -49,15 +50,20 @@ class RegisterViewModel @Inject constructor(
             result.fold(
                 onSuccess = { authResult ->
                     tokenDataStore.saveTokens(authResult.token, authResult.refreshToken)
-                    _state.value = RegisterState(isSuccess = true)
+
+                    _state.value = RegisterState(
+                        isSuccess = true,
+                        role = authResult.user.role
+                    )
                 },
                 onFailure = { exception ->
-                    _state.value = RegisterState(error = exception.message ?: "Error al registrar")
+                    _state.value = RegisterState(
+                        error = exception.message ?: "Error al registrar"
+                    )
                 }
             )
         }
     }
-    
     fun resetError() {
         _state.value = _state.value.copy(error = null)
     }
