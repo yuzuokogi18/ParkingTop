@@ -37,10 +37,11 @@ import com.example.parkingtop.ui.theme.TextPrimary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit = {},
+    onSubscription: () -> Unit = {},
+    onHome: () -> Unit = {},
     onRegisterClick: () -> Unit = {},
     viewModel: LoginViewModel = hiltViewModel()
-) {
+){
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -50,7 +51,17 @@ fun LoginScreen(
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
-            onLoginSuccess()
+
+            when (state.role) {
+
+                "owner" -> {
+                    onSubscription()
+                }
+
+                "customer" -> {
+                    onHome()
+                }
+            }
         }
     }
 

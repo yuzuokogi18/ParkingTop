@@ -30,19 +30,34 @@ fun AppNavigation() {
 
         composable(AppRoutes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = { 
+
+                onSubscription = {
                     navController.navigate(AppRoutes.SUBSCRIPTION) {
                         popUpTo(AppRoutes.LOGIN) { inclusive = true }
                     }
                 },
-                onRegisterClick = { navController.navigate(AppRoutes.REGISTER) }
+
+                onHome = {
+                    navController.navigate(AppRoutes.HOME_CLIENT) {
+                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                    }
+                },
+
+                onRegisterClick = {
+                    navController.navigate(AppRoutes.REGISTER)
+                }
             )
         }
 
         composable(AppRoutes.REGISTER) {
             RegisterScreen(
-                onRegisterSuccess = { 
+                onSubscription = {
                     navController.navigate(AppRoutes.SUBSCRIPTION) {
+                        popUpTo(AppRoutes.REGISTER) { inclusive = true }
+                    }
+                },
+                onHome = {
+                    navController.navigate(AppRoutes.HOME_CLIENT) {
                         popUpTo(AppRoutes.REGISTER) { inclusive = true }
                     }
                 },

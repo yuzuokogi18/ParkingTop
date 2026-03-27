@@ -48,3 +48,36 @@ data class UserDTO(
     val createdAt: String,
     val updatedAt: String
 )
+
+@Serializable
+data class ParkingDTO(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val address: String,
+    val city: String,
+    val state: String,
+    val latitude: Double,
+    val longitude: Double,
+    val availableSpots: Int,
+    val totalSpots: Int,
+    val basePricePerHour: Double,
+    val ratingAverage: Double,
+    val images: List<String>,
+    val distance: Double
+)
+
+@Serializable
+data class UserProfileDTO(
+    val id: String,
+    val email: String,
+    val fullName: String,
+    val phone: String?,
+    val role: String,
+    val status: String,
+    val profileImageUrl: String?,
+    val emailVerified: Boolean,
+    val phoneVerified: Boolean,
+    val createdAt: String,
+    val lastLoginAt: String?
+)
