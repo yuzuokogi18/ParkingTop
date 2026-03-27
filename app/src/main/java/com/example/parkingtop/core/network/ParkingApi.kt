@@ -3,6 +3,7 @@ package com.example.parkingtop.core.network
 import com.example.parkingtop.core.network.model.ApiResponse
 import com.example.parkingtop.core.network.model.LoginRequest
 import com.example.parkingtop.features.register.data.datasources.models.AuthResponseDTO
+import com.example.parkingtop.features.register.data.datasources.models.RegisterRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -14,15 +15,9 @@ import retrofit2.http.Part
 
 interface ParkingApi {
 
-    @Multipart
     @POST("v1/auth/register")
     suspend fun register(
-        @Part("email") email: RequestBody,
-        @Part("password") password: RequestBody,
-        @Part("fullName") fullName: RequestBody,
-        @Part("phone") phone: RequestBody?,
-        @Part("role") role: RequestBody?,
-        @Part profileImage: MultipartBody.Part?
+        @Body request: RegisterRequest
     ): Response<ApiResponse<AuthResponseDTO>>
 
     @POST("v1/auth/login")
