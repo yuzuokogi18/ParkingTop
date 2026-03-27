@@ -2,15 +2,13 @@ package com.example.parkingtop.features.subscritionplan.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +17,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.parkingtop.R
@@ -43,10 +40,10 @@ fun SubscriptionPlanScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "Planes de Suscripción",
+                            "Parking Top",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
+                                fontSize = 18.sp
                             ),
                             color = TextPrimary
                         )
@@ -67,11 +64,6 @@ fun SubscriptionPlanScreen(
                             )
                         }
                     },
-                    actions = {
-                        IconButton(onClick = { /* Help */ }) {
-                            Icon(Icons.Default.HelpOutline, contentDescription = null, tint = Color.Gray)
-                        }
-                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
                 )
                 HorizontalDivider(thickness = 1.dp, color = Color(0xFFEEEEEE))
@@ -88,16 +80,38 @@ fun SubscriptionPlanScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                "FRECUENCIA DE FACTURACIÓN",
-                fontSize = 12.sp,
+                text = "Elige tu Plan",
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                letterSpacing = 0.5.sp
+                color = TextPrimary
             )
+            
+            Text(
+                text = "Optimiza la gestión de tus lotes con herramientas avanzadas.",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Info, 
+                    contentDescription = null, 
+                    tint = BlueSecondary, 
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Frecuencia de Facturación",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Frequency Selector
             FrequencySelector(
                 selectedFrequency = selectedFrequency,
                 onFrequencySelected = { selectedFrequency = it }
@@ -105,79 +119,89 @@ fun SubscriptionPlanScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Plan Básico (Actual)
+            // Plan Básico
             PlanCard(
-                title = "Básico",
-                price = "9.99",
+                title = "Plan Básico",
+                description = "Ideal para empezar",
+                price = "300",
+                lotes = "1",
+                sitios = "50",
+                comision = "15%",
                 isCurrent = true,
-                features = listOf(
-                    "Hasta 2 listados activos" to true,
-                    "Visibilidad estándar" to true,
-                    "Soporte por email" to true,
-                    "Analíticas básicas" to false,
-                    "Destacados premium" to false
-                ),
-                buttonText = "Suscripción Activa",
+                features = listOf("basic analytics", "email support"),
+                trialPeriod = "7 días",
+                buttonText = "Plan Actual",
                 onButtonClick = {}
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Plan Pro (Recomendado)
+            // Plan Premium
             PlanCard(
-                title = "Pro",
-                price = "24.99",
-                isCurrent = false,
-                isRecommended = true,
-                icon = Icons.Outlined.Bolt,
-                iconColor = Color(0xFFFBC02D),
-                features = listOf(
-                    "Listados ilimitados" to true,
-                    "Visibilidad prioritaria (Boost)" to true,
-                    "Soporte 24/7 dedicado" to true,
-                    "Analíticas avanzadas" to true,
-                    "Insignia de verificado" to true
-                ),
-                buttonText = "Mejorar a Pro",
+                title = "Plan Premium",
+                description = "Para múltiples estacionamientos",
+                price = "600",
+                lotes = "5",
+                sitios = "∞",
+                comision = "12%",
+                features = listOf("advanced analytics", "priority support"),
+                trialPeriod = "14 días",
+                buttonText = "Seleccionar Plan",
                 onButtonClick = onUpgradeClick
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Comparar todos los beneficios
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { /* Compare benefits */ },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Comparar todos los beneficios",
-                    color = BlueSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = BlueSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Los pagos se procesarán de forma segura. Puedes cancelar tu suscripción en cualquier momento desde los ajustes de tu cuenta.",
-                fontSize = 11.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                lineHeight = 16.sp
+            // Plan Empresarial
+            PlanCard(
+                title = "Plan Empresarial",
+                description = "Solución completa",
+                price = "900",
+                setupFee = "300",
+                lotes = "∞",
+                sitios = "∞",
+                comision = "10%",
+                features = listOf("advanced analytics", "24/7 support", "api access"),
+                trialPeriod = "30 días",
+                buttonText = "Seleccionar Plan",
+                onButtonClick = {}
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Custom Plan Banner
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                color = Color(0xFFFFF9F2),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier.size(40.dp).background(Color(0xFFFFECB3), RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Outlined.Lightbulb, contentDescription = null, tint = Color(0xFFFFB300))
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            "¿Necesitas algo a medida?",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            "Contacta con nuestro equipo para planes corporativos personalizados.",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }
