@@ -22,3 +22,12 @@ data class UserDTO(
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
+
+@Serializable
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val fullName: String,
+    val phone: String? = null,
+    val role: String? = "customer"
+)

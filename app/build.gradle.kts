@@ -70,7 +70,7 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
-
+    implementation(libs.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

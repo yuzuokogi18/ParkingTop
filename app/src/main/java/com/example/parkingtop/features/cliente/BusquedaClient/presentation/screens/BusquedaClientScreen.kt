@@ -32,7 +32,7 @@ fun BusquedaClientScreen(
     onHomeClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    val selectedTab = 1 // Buscar is selected
+    val selectedTab = 1 // Buscar isi selected
 
     Scaffold(
         containerColor = Color.White,
