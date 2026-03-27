@@ -1,6 +1,7 @@
 package com.example.parkingtop.features.register.data.datasources.models
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class AuthResponseDTO(
@@ -16,7 +17,8 @@ data class UserDTO(
     val fullName: String,
     val phone: String? = null,
     val role: String,
-    val profileImage: String? = null,
+    @SerialName("profileImageUrl") // Coincide con tu descripción de la API
+    val profileImageUrl: String? = null,
     val isActive: Boolean = true,
     val emailVerified: Boolean = false,
     val createdAt: String? = null,

@@ -1,13 +1,19 @@
 package com.example.parkingtop.features.register.presentation.screens
 
+import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -21,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -31,12 +39,16 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.parkingtop.R
 import com.example.parkingtop.features.register.presentation.components.RegisterField
 import com.example.parkingtop.features.register.presentation.components.RoleCard
 import com.example.parkingtop.features.register.presentation.viewmodels.RegisterViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +57,7 @@ fun RegisterScreen(
     onLoginClick: () -> Unit = {},
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -53,6 +66,15 @@ fun RegisterScreen(
     var selectedRole by remember { mutableStateOf("Cliente") }
 
     val state by viewModel.state
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val file = uriToFile(context, it)
+            viewModel.onImageSelected(it, file)
+        }
+    }
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
@@ -106,7 +128,38 @@ fun RegisterScreen(
                 .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // IMAGE PICKER
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF5F5F5))
+                        .clickable { launcher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (state.selectedImageUri != null) {
+                        AsyncImage(
+                            model = state.selectedImageUri,
+                            contentDescription = "Profile Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.AddAPhoto, contentDescription = null, tint = Color.Gray)
+                            Text("Foto", fontSize = 12.sp, color = Color.Gray)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Únete a Parking Top",
@@ -275,4 +328,14 @@ fun RegisterScreen(
             }
         }
     }
+}
+
+private fun uriToFile(context: Context, uri: Uri): File {
+    val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+    val file = File(context.cacheDir, "profile_image_${System.currentTimeMillis()}.jpg")
+    val outputStream = FileOutputStream(file)
+    inputStream?.copyTo(outputStream)
+    inputStream?.close()
+    outputStream.close()
+    return file
 }

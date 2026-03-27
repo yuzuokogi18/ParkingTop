@@ -1,18 +1,20 @@
 package com.example.parkingtop.features.register.data.repositories
 
 import com.example.parkingtop.core.network.ParkingApi
+import com.example.parkingtop.core.network.model.ApiResponse
 import com.example.parkingtop.features.register.data.datasources.mapper.toDomain
 import com.example.parkingtop.features.register.domain.entities.AuthResult
 import com.example.parkingtop.features.register.domain.repositories.RegisterRepository
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import javax.inject.Inject
 
 class RegisterRepositoryImpl @Inject constructor(
-    private val api: ParkingApi
+    private val api: ParkingApi,
+    private val json: Json
 ) : RegisterRepository {
 
     override suspend fun register(
@@ -24,14 +26,15 @@ class RegisterRepositoryImpl @Inject constructor(
         profileImage: File?
     ): Result<AuthResult> {
         return try {
-            val emailPart = email.toRequestBody("text/plain".toMediaTypeOrNull())
-            val passwordPart = password.toRequestBody("text/plain".toMediaTypeOrNull())
-            val fullNamePart = fullName.toRequestBody("text/plain".toMediaTypeOrNull())
-            val phonePart = phone?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val rolePart = role?.toRequestBody("text/plain".toMediaTypeOrNull())
+            // Convertimos cada campo a MultipartBody.Part para que coincida con la interfaz ParkingApi
+            val emailPart = MultipartBody.Part.createFormData("email", email)
+            val passwordPart = MultipartBody.Part.createFormData("password", password)
+            val fullNamePart = MultipartBody.Part.createFormData("fullName", fullName)
+            val phonePart = phone?.let { MultipartBody.Part.createFormData("phone", it) }
+            val rolePart = MultipartBody.Part.createFormData("role", role ?: "customer")
 
             val imagePart = profileImage?.let {
-                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+                val requestFile = it.asRequestBody("image/jpeg".toMediaTypeOrNull())
                 MultipartBody.Part.createFormData("profileImage", it.name, requestFile)
             }
 
@@ -47,7 +50,14 @@ class RegisterRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body()?.data != null) {
                 Result.success(response.body()!!.data!!.toDomain())
             } else {
-                Result.failure(Exception(response.message() ?: "Error desconocido"))
+                val errorBody = response.errorBody()?.string()
+                val message = try {
+                    val apiError = json.decodeFromString<ApiResponse<Unit>>(errorBody ?: "")
+                    apiError.error?.message ?: response.message()
+                } catch (e: Exception) {
+                    errorBody ?: response.message() ?: "Error desconocido"
+                }
+                Result.failure(Exception(message))
             }
         } catch (e: Exception) {
             Result.failure(e)

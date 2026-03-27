@@ -17,12 +17,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "https://api.parkingtop.com/v1/"
+    // Quitamos el v1 de aquí porque ya está en los endpoints de la interfaz
+    private const val BASE_URL = "https://api.parking-top.shop/"
+
     @Provides
     @Singleton
     fun provideJson(): Json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
+        encodeDefaults = true
     }
 
     @Provides

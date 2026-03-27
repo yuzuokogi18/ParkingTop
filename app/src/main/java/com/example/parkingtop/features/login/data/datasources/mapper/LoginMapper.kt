@@ -11,7 +11,7 @@ fun AuthResponseDTO.toDomain(): AuthResult {
             email = this.user.email,
             fullName = this.user.fullName,
             role = this.user.role,
-            profileImageUrl = this.user.profileImage
+            profileImageUrl = this.user.profileImageUrl
         ),
         token = this.token,
         refreshToken = this.refreshToken

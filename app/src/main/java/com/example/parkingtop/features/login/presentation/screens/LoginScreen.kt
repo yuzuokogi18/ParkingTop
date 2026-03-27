@@ -37,7 +37,7 @@ import com.example.parkingtop.ui.theme.TextPrimary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit = {},
+    onLoginSuccess: (String) -> Unit = {},
     onRegisterClick: () -> Unit = {},
     viewModel: LoginViewModel = hiltViewModel()
 ) {
@@ -49,8 +49,8 @@ fun LoginScreen(
     val state by viewModel.state
 
     LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
-            onLoginSuccess()
+        if (state.isSuccess && state.userRole != null) {
+            onLoginSuccess(state.userRole!!)
         }
     }
 

@@ -30,9 +30,16 @@ fun AppNavigation() {
 
         composable(AppRoutes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = { 
-                    navController.navigate(AppRoutes.SUBSCRIPTION) {
-                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                onLoginSuccess = { role ->
+                    // Si es propietario (owner), va a suscripciones. Si es cliente (customer), va directo a Home.
+                    if (role == "owner") {
+                        navController.navigate(AppRoutes.SUBSCRIPTION) {
+                            popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(AppRoutes.HOME_CLIENT) {
+                            popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                        }
                     }
                 },
                 onRegisterClick = { navController.navigate(AppRoutes.REGISTER) }
@@ -42,7 +49,7 @@ fun AppNavigation() {
         composable(AppRoutes.REGISTER) {
             RegisterScreen(
                 onRegisterSuccess = { 
-                    navController.navigate(AppRoutes.SUBSCRIPTION) {
+                    navController.navigate(AppRoutes.LOGIN) {
                         popUpTo(AppRoutes.REGISTER) { inclusive = true }
                     }
                 },

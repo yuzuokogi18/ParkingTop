@@ -13,7 +13,8 @@ import javax.inject.Inject
 data class LoginState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val userRole: String? = null
 )
 
 @HiltViewModel
@@ -34,7 +35,7 @@ class LoginViewModel @Inject constructor(
             result.fold(
                 onSuccess = { authResult ->
                     tokenDataStore.saveTokens(authResult.token, authResult.refreshToken ?: "")
-                    _state.value = LoginState(isSuccess = true)
+                    _state.value = LoginState(isSuccess = true, userRole = authResult.user.role)
                 },
                 onFailure = { exception ->
                     _state.value = LoginState(error = exception.message ?: "Error al iniciar sesión")
