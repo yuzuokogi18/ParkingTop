@@ -2,130 +2,148 @@ package com.example.parkingtop.features.cliente.BusquedaClient.presentation.comp
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 data class SearchParkingItem(
+    val id: String,
     val name: String,
-    val distance: String,
+    val address: String,
     val price: String,
     val spaces: Int,
     val rating: Float,
-    val status: String
+    val status: String,
+    val imageUrl: String? = null
 )
 
 @Composable
-fun SearchParkingCard(item: SearchParkingItem) {
+fun SearchParkingCard(
+    item: SearchParkingItem,
+    onParkingClick: (String) -> Unit
+) {
+
+    val statusColor = when (item.status) {
+        "Disponible" -> Color(0xFF4CAF50)
+        "Pocos" -> Color(0xFFFF9800)
+        else -> Color(0xFFF44336)
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onParkingClick(item.id)   // 👈 aquí enviamos el id
+            },
+
+        shape = RoundedCornerShape(14.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        ),
+
         border = BorderStroke(1.dp, Color(0xFFEEEEEE))
     ) {
+
         Row(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(10.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
+
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.name,
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(95.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color.DarkGray)
-            ) {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)))
-                Text(
-                    text = item.name, 
-                    color = Color.White, 
-                    fontWeight = FontWeight.Bold, 
-                    fontSize = 11.sp, 
-                    modifier = Modifier.align(Alignment.BottomStart).padding(6.dp),
-                    maxLines = 2
-                )
-            }
+                    .background(Color(0xFFE0E0E0)),
+                contentScale = ContentScale.Crop
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.Place, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(item.distance, fontSize = 12.sp, color = Color.Gray)
-                }
-                
-                Spacer(modifier = Modifier.height(2.dp))
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("€${item.price} / h", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
+
+                Text(
+                    text = item.name,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.DirectionsCar, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("${item.spaces} espacios", fontSize = 12.sp, color = Color.Gray)
-                }
+                Text(
+                    text = item.address,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "$${item.price} / hora",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "${item.spaces} espacios disponibles",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFFFB74D))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(item.rating.toString(), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
 
-                    val statusColor = when (item.status) {
-                        "Disponible" -> Color(0xFF4CAF50)
-                        "Pocos" -> Color(0xFFFF9800)
-                        else -> Color(0xFFF44336)
-                    }
-                    
-                    if (item.status == "Lleno") {
-                        Surface(
-                            color = statusColor,
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                item.status,
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = Color(0xFFFFB74D)
+                        )
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
                         Text(
-                            item.status,
-                            color = statusColor,
-                            fontSize = 11.sp,
+                            text = item.rating.toString(),
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
+
+                    Text(
+                        text = item.status,
+                        color = statusColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

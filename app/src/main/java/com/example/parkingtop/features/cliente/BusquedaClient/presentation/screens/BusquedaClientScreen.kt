@@ -15,24 +15,53 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.parkingtop.R
+import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.ParkingMap
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.SearchParkingCard
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.SearchParkingItem
+import com.example.parkingtop.features.cliente.BusquedaClient.presentation.viewmodels.ParkingMapViewModel
+import com.example.parkingtop.features.cliente.BusquedaClient.presentation.viewmodels.ParkingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusquedaClientScreen(
     onHomeClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onParkingClick: (String) -> Unit = {},
+    listViewModel: ParkingViewModel = hiltViewModel(),
+    mapViewModel: ParkingMapViewModel = hiltViewModel()
 ) {
-    val selectedTab = 1 // Buscar isi selected
+    val selectedTab = 1
+
+    // Estado de lista (ya existente)
+    val parkingLots by listViewModel.parkingLots.collectAsStateWithLifecycle()
+    val parkings = parkingLots.map {
+        SearchParkingItem(
+            id            = it.id,
+            name          = it.name,
+            address       = it.address,
+            price         = it.pricePerHour.toString(),
+            spaces        = it.availableSpots,
+            rating        = it.rating.toFloat(),
+            status        = when {
+                it.availableSpots == 0 -> "Lleno"
+                it.availableSpots < 5  -> "Pocos"
+                else                   -> "Disponible"
+            },
+            imageUrl      = it.images.firstOrNull()
+        )
+    }
+
+    // Estado del mapa
+    val mapState by mapViewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = Color.White,
@@ -44,9 +73,8 @@ fun BusquedaClientScreen(
                             "Resultados de Búsqueda",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
+                                fontSize   = 18.sp
+                            )
                         )
                     },
                     navigationIcon = {
@@ -59,9 +87,9 @@ fun BusquedaClientScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.logo_parking),
+                                painter           = painterResource(R.drawable.logo_parking),
                                 contentDescription = "Logo",
-                                modifier = Modifier.size(22.dp)
+                                modifier          = Modifier.size(22.dp)
                             )
                         }
                     },
@@ -69,7 +97,7 @@ fun BusquedaClientScreen(
                         containerColor = Color.White
                     )
                 )
-                
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -78,149 +106,130 @@ fun BusquedaClientScreen(
                 ) {
                     Surface(
                         onClick = { },
-                        color = Color(0xFFF1F3F4),
-                        shape = RoundedCornerShape(8.dp),
+                        color   = Color(0xFFF1F3F4),
+                        shape   = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(36.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp),
+                            modifier          = Modifier.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Sort, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Sort, contentDescription = null,
+                                tint = Color.Black, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Distancia", color = Color.Black, fontSize = 12.sp)
                         }
                     }
-
                     Surface(
                         onClick = { },
-                        color = Color(0xFFF1F3F4),
-                        shape = RoundedCornerShape(8.dp),
+                        color   = Color(0xFFF1F3F4),
+                        shape   = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(36.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp),
+                            modifier          = Modifier.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Search, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Search, contentDescription = null,
+                                tint = Color.Black, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Filtros", color = Color.Black, fontSize = 12.sp)
                         }
                     }
                 }
+
                 HorizontalDivider(thickness = 1.dp, color = Color(0xFFEEEEEE))
             }
         },
+
         bottomBar = {
-            Surface(
-                color = Color.White,
-                shadowElevation = 16.dp
-            ) {
+            Surface(color = Color.White, shadowElevation = 16.dp) {
                 NavigationBar(
-                    modifier = Modifier.height(64.dp),
-                    containerColor = Color.White,
-                    tonalElevation = 0.dp
+                    modifier        = Modifier.height(64.dp),
+                    containerColor  = Color.White,
+                    tonalElevation  = 0.dp
                 ) {
                     NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = onHomeClick,
-                        icon = { 
-                            Icon(
-                                imageVector = Icons.Default.Home, 
-                                contentDescription = "Home",
-                                modifier = Modifier.size(20.dp)
-                            ) 
-                        },
-                        label = { Text("Home", fontSize = 10.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = Color.Transparent
-                        )
+                        selected = selectedTab == 0, onClick = onHomeClick,
+                        icon  = { Icon(Icons.Default.Home, contentDescription = "Home",
+                            modifier = Modifier.size(20.dp)) },
+                        label = { Text("Home", fontSize = 10.sp) }
                     )
                     NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { },
-                        icon = { 
-                            Icon(
-                                imageVector = Icons.Default.Search, 
-                                contentDescription = "Buscar",
-                                modifier = Modifier.size(20.dp)
-                            ) 
-                        },
-                        label = { Text("Buscar", fontSize = 10.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.secondary,
-                            selectedTextColor = MaterialTheme.colorScheme.secondary,
-                            indicatorColor = Color.Transparent
-                        )
+                        selected = selectedTab == 1, onClick = { },
+                        icon  = { Icon(Icons.Default.Search, contentDescription = "Buscar",
+                            modifier = Modifier.size(20.dp)) },
+                        label = { Text("Buscar", fontSize = 10.sp) }
                     )
                     NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = onProfileClick,
-                        icon = { 
-                            Icon(
-                                imageVector = Icons.Default.Person, 
-                                contentDescription = "Perfil",
-                                modifier = Modifier.size(20.dp)
-                            ) 
-                        },
-                        label = { Text("Perfil", fontSize = 10.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = Color.Transparent
-                        )
+                        selected = selectedTab == 2, onClick = onProfileClick,
+                        icon  = { Icon(Icons.Default.Person, contentDescription = "Perfil",
+                            modifier = Modifier.size(20.dp)) },
+                        label = { Text("Perfil", fontSize = 10.sp) }
                     )
                 }
             }
         }
+
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Mapa placeholder
+
+            // ── MAPA REAL (reemplaza el placeholder gris) ─────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
+                    .height(220.dp)                          // un poco más alto ahora que es real
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFE9EEF1)),
-                contentAlignment = Alignment.Center
             ) {
-                // Background visual detail for map
-                Icon(
-                    painter = painterResource(id = R.drawable.logo_parking),
-                    contentDescription = null,
-                    modifier = Modifier.size(120.dp).alpha(0.05f)
-                )
-                Text("Vista de Mapa", color = Color.Gray, fontWeight = FontWeight.Medium)
+                if (mapState.isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFFE9EEF1)),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                } else {
+                    ParkingMap(
+                        markers        = mapState.markers,
+                        selectedMarker = mapState.selectedMarker,
+                        onMarkerClick  = { mapViewModel.onMarkerSelected(it) },
+                        onCardClick    = { id -> onParkingClick(id) },
+                        onDismiss      = { mapViewModel.onMarkerDismissed() },
+                        modifier       = Modifier.fillMaxSize()
+                    )
+                }
             }
+            // ─────────────────────────────────────────────────────────────────
 
             Text(
                 "Estacionamientos disponibles",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                fontSize     = 18.sp,
+                fontWeight   = FontWeight.Bold,
+                modifier     = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val parkings = listOf(
-                    SearchParkingItem("Parking Central", "0.5 km", "2.50", 15, 4.5f, "Disponible"),
-                    SearchParkingItem("Estacionamiento Plaza", "1.2 km", "1.80", 3, 3.9f, "Pocos"),
-                    SearchParkingItem("Garaje 24h Av.", "0.8 km", "3.00", 0, 4.8f, "Lleno"),
-                    SearchParkingItem("Parking del Centro", "2.1 km", "2.00", 20, 4.2f, "Disponible"),
-                    SearchParkingItem("Parking de la Est.", "0.3 km", "2.75", 7, 4.1f, "Pocos")
-                )
-                items(parkings) { parking ->
-                    SearchParkingCard(parking)
+            if (parkings.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(
+                    modifier        = Modifier.fillMaxSize(),
+                    contentPadding  = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(parkings) { parking ->
+                        SearchParkingCard(
+                            item          = parking,
+                            onParkingClick = { id -> onParkingClick(id) }
+                        )
+                    }
                 }
             }
         }

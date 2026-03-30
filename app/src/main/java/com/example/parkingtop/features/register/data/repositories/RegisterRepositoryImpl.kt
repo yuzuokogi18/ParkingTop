@@ -12,7 +12,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import javax.inject.Inject
 
-// RegisterRepositoryImpl.kt
 class RegisterRepositoryImpl @Inject constructor(
     private val api: ParkingApi
 ) : RegisterRepository {
@@ -26,22 +25,51 @@ class RegisterRepositoryImpl @Inject constructor(
         profileImage: File?
     ): Result<AuthResult> {
         return try {
-            // Crear objeto JSON en lugar de multipart
-            val registerRequest = RegisterRequest(
-                email = email,
-                password = password,
-                fullName = fullName,
-                phone = phone,
-                role = role
-                // profileImage no se envía por ahora - se puede agregar después
-            )
+            val response = if (profileImage != null) {
+                // ── Multipart request (with image) ─────────────────────────
+                val emailPart    = email.toRequestBody("text/plain".toMediaTypeOrNull())
+                val passwordPart = password.toRequestBody("text/plain".toMediaTypeOrNull())
+                val namePart     = fullName.toRequestBody("text/plain".toMediaTypeOrNull())
+                val rolePart     = (role ?: "customer").toRequestBody("text/plain".toMediaTypeOrNull())
+                val phonePart    = phone?.toRequestBody("text/plain".toMediaTypeOrNull())
 
-            val response = api.register(registerRequest)
+                val mimeType = when {
+                    profileImage.name.endsWith(".png")  -> "image/png"
+                    profileImage.name.endsWith(".webp") -> "image/webp"
+                    else -> "image/jpeg"
+                }
+                val imagePart = MultipartBody.Part.createFormData(
+                    name     = "profileImage",
+                    filename = profileImage.name,
+                    body     = profileImage.asRequestBody(mimeType.toMediaTypeOrNull())
+                )
+
+                api.registerWithImage(
+                    email        = emailPart,
+                    password     = passwordPart,
+                    fullName     = namePart,
+                    phone        = phonePart,
+                    role         = rolePart,
+                    profileImage = imagePart
+                )
+            } else {
+                // ── JSON request (no image) ─────────────────────────────────
+                api.register(
+                    RegisterRequest(
+                        email    = email,
+                        password = password,
+                        fullName = fullName,
+                        phone    = phone,
+                        role     = role
+                    )
+                )
+            }
 
             if (response.isSuccessful && response.body()?.data != null) {
                 Result.success(response.body()!!.data!!.toDomain())
             } else {
-                Result.failure(Exception(response.message() ?: "Error desconocido"))
+                val errorMsg = response.errorBody()?.string() ?: response.message() ?: "Error desconocido"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

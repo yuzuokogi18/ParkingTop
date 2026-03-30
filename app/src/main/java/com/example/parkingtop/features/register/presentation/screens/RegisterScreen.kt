@@ -1,13 +1,19 @@
 package com.example.parkingtop.features.register.presentation.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -21,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -31,7 +39,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.parkingtop.R
+import com.example.parkingtop.core.utils.uriToFile
 import com.example.parkingtop.features.register.presentation.components.RegisterField
 import com.example.parkingtop.features.register.presentation.components.RoleCard
 import com.example.parkingtop.features.register.presentation.viewmodels.RegisterViewModel
@@ -46,6 +56,8 @@ fun RegisterScreen(
     onLoginClick: () -> Unit,
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -53,19 +65,22 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("Cliente") }
 
+    // Image state
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri
+    }
+
     val state by viewModel.state
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
-
             when (state.role) {
-                "owner" -> {
-                    onSubscription()
-                }
-
-                "customer" -> {
-                    onHome()
-                }
+                "owner" -> onSubscription()
+                "customer" -> onHome()
             }
         }
     }
@@ -137,6 +152,80 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // ── PROFILE IMAGE PICKER ──────────────────────────────────────
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF0F4FF))
+                        .border(2.dp, BlueSecondary, CircleShape)
+                        .clickable { imagePickerLauncher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selectedImageUri != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedImageUri),
+                            contentDescription = "Foto de perfil",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Filled.AddAPhoto,
+                                contentDescription = null,
+                                tint = BlueSecondary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Foto",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = BlueSecondary
+                            )
+                        }
+                    }
+                }
+
+                // Small edit badge when image is selected
+                if (selectedImageUri != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(BlueSecondary)
+                            .align(Alignment.BottomCenter)
+                            .offset(x = 32.dp, y = (-4).dp)
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AddAPhoto,
+                            contentDescription = "Cambiar foto",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (selectedImageUri == null) "Agregar foto de perfil (opcional)"
+                else "Toca para cambiar la foto",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            // ─────────────────────────────────────────────────────────────
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             if (state.error != null) {
                 Text(
                     text = state.error!!,
@@ -155,7 +244,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // CORREO
             RegisterField(
                 label = "Correo Electrónico",
                 value = email,
@@ -198,7 +286,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // TELÉFONO
             RegisterField(
                 label = "Teléfono (Opcional)",
                 value = phone,
@@ -242,12 +329,15 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     val role = if (selectedRole == "Cliente") "customer" else "owner"
+                    // Convert URI → File only when the user taps register
+                    val imageFile = selectedImageUri?.let { uriToFile(context, it) }
                     viewModel.register(
                         email = email,
                         password = password,
                         fullName = name,
                         phone = phone.ifEmpty { null },
-                        role = role
+                        role = role,
+                        profileImage = imageFile
                     )
                 },
                 modifier = Modifier
@@ -270,8 +360,9 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // LOGIN LINK
-            Box(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp), contentAlignment = Alignment.Center) {
                 Text(
                     text = buildAnnotatedString {
                         append("¿Ya tienes cuenta? ")

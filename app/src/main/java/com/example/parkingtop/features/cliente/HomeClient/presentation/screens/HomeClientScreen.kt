@@ -157,14 +157,13 @@ fun HomeClientScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
         ) {
+
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Permission Card
             LocationPermissionCard()
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Search Bar
             HomeSearchBar(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it }
@@ -172,7 +171,6 @@ fun HomeClientScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Radio Slider
             SearchRadiusSlider(
                 position = sliderPosition,
                 onPositionChange = { sliderPosition = it }
@@ -185,18 +183,18 @@ fun HomeClientScreen(
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Grid of Parking
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 val sampleParkings = listOf(
                     ParkingItem("Parking Central", "0.5 km", "2.50", "Libre", 4.8f, 1),
