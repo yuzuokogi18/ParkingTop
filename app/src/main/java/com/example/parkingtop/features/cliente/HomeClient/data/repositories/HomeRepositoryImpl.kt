@@ -2,12 +2,11 @@ package com.example.parkingtop.features.cliente.HomeClient.data.repositories
 
 import com.example.parkingtop.core.datastore.TokenDataStore
 import com.example.parkingtop.core.network.ParkingApi
-import com.example.parkingtop.features.cliente.HomeClient.data.datasources.mappper.toDomain
-import com.example.parkingtop.features.cliente.HomeClient.data.datasources.models.ParkingDTO
-import com.example.parkingtop.features.cliente.HomeClient.data.datasources.models.ParkingLotDTO
 import com.example.parkingtop.features.cliente.HomeClient.domain.entities.ParkingLot
-import com.example.parkingtop.features.cliente.HomeClient.domain.entities.UserProfile
 import com.example.parkingtop.features.cliente.HomeClient.domain.repositories.HomeRepository
+import com.example.parkingtop.features.cliente.HomeClient.data.datasources.mappper.toDomain
+import com.example.parkingtop.features.cliente.Perfil.data.datasources.mapper.toDomain
+import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.User
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -30,7 +29,7 @@ class HomeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getUserProfile(): Result<UserProfile> {
+    override suspend fun getUserProfile(): Result<User> {
         return try {
             val token = tokenDataStore.accessToken.first()
             if (token == null) return Result.failure(Exception("No hay sesión activa"))

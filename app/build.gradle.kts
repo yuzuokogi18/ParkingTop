@@ -31,11 +31,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -54,6 +55,9 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
 
+    implementation(libs.coil.compose)
+
+    implementation(libs.maplibre.android)
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -69,6 +73,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     // Serialization
+    coreLibraryDesugaring(libs.desugar.jdk)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.gson)
     testImplementation(libs.junit)
