@@ -1,4 +1,4 @@
-// core/network/ParkingApi.kt - ACTUALIZACIÓN
+// core/network/ParkingApi.kt - ACTUALIZACIÓN COMPLETA PARA PROPIETARIOS
 package com.example.parkingtop.core.network
 
 import com.example.parkingtop.core.network.model.ApiResponse
@@ -14,6 +14,8 @@ import com.example.parkingtop.features.cliente.Perfil.data.datasources.models.Re
 import com.example.parkingtop.features.cliente.Perfil.data.datasources.models.UserDTO
 import com.example.parkingtop.features.cliente.Perfil.data.datasources.models.VehicleDTO
 import com.example.parkingtop.features.cliente.updateProfile.data.datasources.models.UpdateProfileRequest
+import com.example.parkingtop.features.propetario.horariopropetario.data.datasources.models.AvailabilityResponseDto
+import com.example.parkingtop.features.propetario.reservationpropetario.data.datasources.models.ReservationOwnerDto
 import com.example.parkingtop.features.register.data.datasources.models.AuthResponseDTO
 import com.example.parkingtop.features.register.data.datasources.models.RegisterRequest
 import okhttp3.MultipartBody
@@ -147,8 +149,71 @@ interface ParkingApi {
         @Path("parkingId") parkingId: String
     ): Response<ApiResponse<ParkingLotDetailDTO>>
 
+    // ENDPOINTS PARA PROPIETARIOS
+    @Multipart
+    @POST("v1/parkings")
+    suspend fun createParking(
+        @Header("Authorization") token: String,
+        @Part("name") name: RequestBody,
+        @Part("address") address: RequestBody,
+        @Part("city") city: RequestBody,
+        @Part("state") state: RequestBody,
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part("totalSpots") totalSpots: RequestBody,
+        @Part("basePricePerHour") basePrice: RequestBody,
+        @Part("overtimeRatePerHour") overtimeRate: RequestBody,
+        @Part("features") features: RequestBody,
+        @Part images: List<MultipartBody.Part>
+    ): Response<ApiResponse<Unit>>
 
+    @PUT("v1/parkings/{id}")
+    suspend fun updateParking(
+        @Header("Authorization") token: String,
+        @Path("id") parkingId: String,
+        @Body data: RequestBody
+    ): Response<ApiResponse<Unit>>
 
+    @DELETE("v1/parkings/{id}")
+    suspend fun deleteParking(
+        @Header("Authorization") token: String,
+        @Path("id") parkingId: String
+    ): Response<ApiResponse<Unit>>
+
+    @GET("v1/parkings/owner/my-parkings")
+    suspend fun getOwnerParkings(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<List<ParkingDTO>>>
+
+    // RESERVACIONES PARA PROPIETARIO
+    @GET("v1/owner/reservations")
+    suspend fun getOwnerReservations(
+        @Header("Authorization") token: String,
+        @Query("status") status: String? = null
+    ): Response<ApiResponse<List<ReservationOwnerDto>>>
+
+    @PATCH("v1/owner/reservations/{id}/status")
+    suspend fun updateReservationStatus(
+        @Header("Authorization") token: String,
+        @Path("id") reservationId: String,
+        @Body status: Map<String, String>
+    ): Response<ApiResponse<Unit>>
+
+    // DISPONIBILIDAD Y HORARIO
+    @GET("v1/owner/availability")
+    suspend fun getAvailability(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<AvailabilityResponseDto>>
+
+    @PATCH("v1/owner/availability/publish")
+    suspend fun updatePublishStatus(
+        @Header("Authorization") token: String,
+        @Body status: Map<String, Boolean>
+    ): Response<ApiResponse<Unit>>
+
+    // ═══════════════════════════════════════
+    // NOTIFICATIONS ENDPOINTS
+    // ═══════════════════════════════════════
     @GET("v1/notifications")
     suspend fun getNotifications(
         @Header("Authorization") token: String
