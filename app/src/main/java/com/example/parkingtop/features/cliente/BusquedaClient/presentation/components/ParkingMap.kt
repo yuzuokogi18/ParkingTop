@@ -27,9 +27,10 @@ import com.example.parkingtop.features.cliente.BusquedaClient.domain.entities.Pa
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
 import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.maps.MapLibreMap
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.DisposableEffect
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.PropertyFactory.*
@@ -48,67 +49,84 @@ fun ParkingMap(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // ✅ Filtra solo los parkings dentro de San Cristóbal antes de renderizar
     val localMarkers = remember(markers) {
         markers.filter { MapsValues.isInsideSanCristobal(it.latitude, it.longitude) }
     }
 
-    Box(modifier = modifier) {
+    // ✅ Guarda referencia al MapView (no solo al map) para manejar lifecycle
+    var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    // ✅ Callback para actualizar markers desde fuera del estilo
+    var updateMarkersCallback by remember { mutableStateOf<((List<ParkingMarker>) -> Unit)?>(null) }
 
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    // ✅ Conecta el lifecycle del MapView al lifecycle de Compose
+    DisposableEffect(mapViewRef, lifecycle) {
+        val mapView = mapViewRef ?: return@DisposableEffect onDispose {}
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START   -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME  -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE   -> mapView.onPause()
+                Lifecycle.Event.ON_STOP    -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> {}
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+
+    // ✅ Actualiza markers cuando cambian — callback ya garantiza que el estilo está listo
+    LaunchedEffect(localMarkers) {
+        updateMarkersCallback?.invoke(localMarkers)
+    }
+
+    Box(modifier = modifier) {
         AndroidView(
             factory = { ctx ->
-                MapView(ctx).apply {
-                    getMapAsync { map: MapLibreMap ->
-                        map.setStyle(MapsValues.MAP_STYLE) { style: Style ->
+                MapView(ctx).also { mapView ->
+                    mapViewRef = mapView
+                    mapView.onCreate(null) // ✅ Necesario antes de getMapAsync
 
-                            // ✅ Cámara centrada en San Cristóbal
+                    mapView.getMapAsync { map ->
+                        map.setStyle(MapsValues.MAP_STYLE) { style ->
+
                             map.cameraPosition = CameraPosition.Builder()
                                 .target(MapsValues.SAN_CRISTOBAL)
-                                .zoom(14.0)
+                                .zoom(14.5)
                                 .build()
 
-                            // ✅ Restringe el mapa a los límites de la ciudad
                             map.setLatLngBoundsForCameraTarget(MapsValues.SAN_CRISTOBAL_BOUNDS)
-                            map.setMinZoomPreference(12.0)   // no puede alejar más de este nivel
-                            map.setMaxZoomPreference(18.0)   // no puede acercar más de este nivel
+                            map.setMinZoomPreference(12.0)
+                            map.setMaxZoomPreference(18.0)
 
-                            style.addImage(MapsValues.MARKER_IMAGE_ID, createParkingMarkerBitmap())
+                            style.addImage(
+                                MapsValues.MARKER_IMAGE_ID,
+                                createParkingMarkerBitmap()
+                            )
 
-                            val features = localMarkers.map { parking ->
-                                Feature.fromGeometry(
-                                    Point.fromLngLat(parking.longitude, parking.latitude)
-                                ).also { f ->
-                                    f.addStringProperty(MapsValues.PROP_ID,   parking.id)
-                                    f.addStringProperty(MapsValues.PROP_NAME, parking.name)
-                                }
+                            // ✅ Agrega fuente y capa vacías primero
+                            val emptyCollection = FeatureCollection.fromFeatures(emptyList())
+                            style.addSource(GeoJsonSource(MapsValues.SOURCE_ID, emptyCollection))
+                            style.addLayer(buildSymbolLayer())
+
+                            // ✅ Expone el callback para actualizar desde LaunchedEffect
+                            updateMarkersCallback = { currentMarkers ->
+                                style.getSourceAs<GeoJsonSource>(MapsValues.SOURCE_ID)
+                                    ?.setGeoJson(buildFeatureCollection(currentMarkers))
                             }
 
-                            style.addSource(
-                                GeoJsonSource(MapsValues.SOURCE_ID, FeatureCollection.fromFeatures(features))
-                            )
-
-                            style.addLayer(
-                                SymbolLayer(MapsValues.LAYER_ID, MapsValues.SOURCE_ID).apply {
-                                    setProperties(
-                                        iconImage(MapsValues.MARKER_IMAGE_ID),
-                                        iconSize(1.2f),
-                                        iconAllowOverlap(true),
-                                        textField("{${MapsValues.PROP_NAME}}"),
-                                        textSize(11f),
-                                        textOffset(arrayOf(0f, 1.8f)),
-                                        textColor("#1A1A2E"),
-                                        textAllowOverlap(false),
-                                        textOptional(true)
-                                    )
-                                }
-                            )
+                            // ✅ Carga los markers que ya estuvieran disponibles
+                            updateMarkersCallback?.invoke(localMarkers)
 
                             map.addOnMapClickListener { latLng ->
                                 val point = map.projection.toScreenLocation(latLng)
-                                val hits  = map.queryRenderedFeatures(point, MapsValues.LAYER_ID)
+                                val hits = map.queryRenderedFeatures(point, MapsValues.LAYER_ID)
                                 if (hits.isNotEmpty()) {
                                     val clickedId = hits[0].getStringProperty(MapsValues.PROP_ID)
-                                    localMarkers.find { it.id == clickedId }?.let { onMarkerClick(it) }
+                                    localMarkers.find { it.id == clickedId }
+                                        ?.let { onMarkerClick(it) }
                                     true
                                 } else false
                             }
@@ -132,6 +150,38 @@ fun ParkingMap(
     }
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+private fun buildFeatureCollection(markers: List<ParkingMarker>): FeatureCollection {
+    val features = markers.map { parking ->
+        Feature.fromGeometry(
+            Point.fromLngLat(parking.longitude, parking.latitude)
+        ).also { f ->
+            f.addStringProperty(MapsValues.PROP_ID,    parking.id)
+            f.addStringProperty(MapsValues.PROP_NAME,  parking.name)
+            f.addNumberProperty(MapsValues.PROP_PRICE, parking.pricePerHour) // ✅ nuevo
+        }
+    }
+    return FeatureCollection.fromFeatures(features)
+}
+
+private fun buildSymbolLayer() = SymbolLayer(MapsValues.LAYER_ID, MapsValues.SOURCE_ID).apply {
+    setProperties(
+        iconImage(MapsValues.MARKER_IMAGE_ID),
+        iconSize(1.2f),
+        iconAllowOverlap(true),
+        iconAnchor("bottom"),          // ✅ ancla el pin en la punta
+        textField("{${MapsValues.PROP_NAME}}"),
+        textSize(11f),
+        textOffset(arrayOf(0f, 0.5f)),
+        textFont(arrayOf("Noto Sans Regular")), // ✅ fuente que SÍ tiene OpenFreeMap
+        textColor("#1A1A2E"),
+        textHaloColor("#FFFFFF"),       // ✅ halo blanco para legibilidad
+        textHaloWidth(1.5f),
+        textAllowOverlap(false),
+        textOptional(true)
+    )
+}
 private fun createParkingMarkerBitmap(): Bitmap {
     val size   = 96
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -159,6 +209,7 @@ private fun createParkingMarkerBitmap(): Bitmap {
     return bitmap
 }
 
+// ── Card preview ──────────────────────────────────────────────────────────────
 @Composable
 private fun ParkingPreviewCard(
     parking: ParkingMarker,

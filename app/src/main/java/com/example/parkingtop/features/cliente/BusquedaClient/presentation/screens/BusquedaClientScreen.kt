@@ -24,11 +24,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.parkingtop.R
+import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.FilterBottomSheet
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.ParkingMap
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.SearchParkingCard
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.components.SearchParkingItem
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.viewmodels.ParkingMapViewModel
 import com.example.parkingtop.features.cliente.BusquedaClient.presentation.viewmodels.ParkingViewModel
+import com.example.parkingtop.ui.theme.BlueSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,27 +43,40 @@ fun BusquedaClientScreen(
 ) {
     val selectedTab = 1
 
-    // Estado de lista (ya existente)
     val parkingLots by listViewModel.parkingLots.collectAsStateWithLifecycle()
+    val filters     by listViewModel.filters.collectAsStateWithLifecycle()
+    val mapState    by mapViewModel.uiState.collectAsStateWithLifecycle()
+
+    var showFilterSheet by remember { mutableStateOf(false) }
+
+    val hasActiveFilters = filters.maxPricePerHour != null ||
+            filters.onlyAvailable        ||
+            filters.minRating > 0f
+
     val parkings = parkingLots.map {
         SearchParkingItem(
-            id            = it.id,
-            name          = it.name,
-            address       = it.address,
-            price         = it.pricePerHour.toString(),
-            spaces        = it.availableSpots,
-            rating        = it.rating.toFloat(),
-            status        = when {
+            id       = it.id,
+            name     = it.name,
+            address  = it.address,
+            price    = it.pricePerHour.toString(),
+            spaces   = it.availableSpots,
+            rating   = it.rating.toFloat(),
+            status   = when {
                 it.availableSpots == 0 -> "Lleno"
                 it.availableSpots < 5  -> "Pocos"
                 else                   -> "Disponible"
             },
-            imageUrl      = it.images.firstOrNull()
+            imageUrl = it.images.firstOrNull()
         )
     }
 
-    // Estado del mapa
-    val mapState by mapViewModel.uiState.collectAsStateWithLifecycle()
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            currentFilters = filters,
+            onApply        = { listViewModel.updateFilters(it) },
+            onDismiss      = { showFilterSheet = false }
+        )
+    }
 
     Scaffold(
         containerColor = Color.White,
@@ -87,9 +102,9 @@ fun BusquedaClientScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter           = painterResource(R.drawable.logo_parking),
+                                painter            = painterResource(R.drawable.logo_parking),
                                 contentDescription = "Logo",
-                                modifier          = Modifier.size(22.dp)
+                                modifier           = Modifier.size(22.dp)
                             )
                         }
                     },
@@ -104,36 +119,59 @@ fun BusquedaClientScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    // ── Distancia — toggle ON/OFF ──────────────────────────────
                     Surface(
-                        onClick = { },
-                        color   = Color(0xFFF1F3F4),
-                        shape   = RoundedCornerShape(8.dp),
+                        onClick = {
+                            listViewModel.updateFilters(
+                                filters.copy(sortByDistance = !filters.sortByDistance)
+                            )
+                        },
+                        color    = if (filters.sortByDistance) BlueSecondary else Color(0xFFF1F3F4),
+                        shape    = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(36.dp)
                     ) {
                         Row(
                             modifier          = Modifier.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Sort, contentDescription = null,
-                                tint = Color.Black, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.Sort,
+                                contentDescription = null,
+                                tint     = if (filters.sortByDistance) Color.White else Color.Black,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Distancia", color = Color.Black, fontSize = 12.sp)
+                            Text(
+                                "Distancia",
+                                color    = if (filters.sortByDistance) Color.White else Color.Black,
+                                fontSize = 12.sp
+                            )
                         }
                     }
+
+                    // ── Filtros — abre bottom sheet ───────────────────────────
                     Surface(
-                        onClick = { },
-                        color   = Color(0xFFF1F3F4),
-                        shape   = RoundedCornerShape(8.dp),
+                        onClick  = { showFilterSheet = true },
+                        color    = if (hasActiveFilters) BlueSecondary else Color(0xFFF1F3F4),
+                        shape    = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(36.dp)
                     ) {
                         Row(
                             modifier          = Modifier.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Search, contentDescription = null,
-                                tint = Color.Black, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = null,
+                                tint     = if (hasActiveFilters) Color.White else Color.Black,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Filtros", color = Color.Black, fontSize = 12.sp)
+                            Text(
+                                text     = if (hasActiveFilters) "Filtros ✓" else "Filtros",
+                                color    = if (hasActiveFilters) Color.White else Color.Black,
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }
@@ -145,26 +183,23 @@ fun BusquedaClientScreen(
         bottomBar = {
             Surface(color = Color.White, shadowElevation = 16.dp) {
                 NavigationBar(
-                    modifier        = Modifier.height(64.dp),
-                    containerColor  = Color.White,
-                    tonalElevation  = 0.dp
+                    modifier       = Modifier.height(64.dp),
+                    containerColor = Color.White,
+                    tonalElevation = 0.dp
                 ) {
                     NavigationBarItem(
                         selected = selectedTab == 0, onClick = onHomeClick,
-                        icon  = { Icon(Icons.Default.Home, contentDescription = "Home",
-                            modifier = Modifier.size(20.dp)) },
+                        icon  = { Icon(Icons.Default.Home, "Home", Modifier.size(20.dp)) },
                         label = { Text("Home", fontSize = 10.sp) }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1, onClick = { },
-                        icon  = { Icon(Icons.Default.Search, contentDescription = "Buscar",
-                            modifier = Modifier.size(20.dp)) },
+                        icon  = { Icon(Icons.Default.Search, "Buscar", Modifier.size(20.dp)) },
                         label = { Text("Buscar", fontSize = 10.sp) }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2, onClick = onProfileClick,
-                        icon  = { Icon(Icons.Default.Person, contentDescription = "Perfil",
-                            modifier = Modifier.size(20.dp)) },
+                        icon  = { Icon(Icons.Default.Person, "Perfil", Modifier.size(20.dp)) },
                         label = { Text("Perfil", fontSize = 10.sp) }
                     )
                 }
@@ -179,19 +214,16 @@ fun BusquedaClientScreen(
                 .padding(innerPadding)
         ) {
 
-            // ── MAPA REAL (reemplaza el placeholder gris) ─────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)                          // un poco más alto ahora que es real
+                    .height(220.dp)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 if (mapState.isLoading) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFFE9EEF1)),
+                        modifier         = Modifier.fillMaxSize().background(Color(0xFFE9EEF1)),
                         contentAlignment = Alignment.Center
                     ) { CircularProgressIndicator() }
                 } else {
@@ -205,18 +237,44 @@ fun BusquedaClientScreen(
                     )
                 }
             }
-            // ─────────────────────────────────────────────────────────────────
 
-            Text(
-                "Estacionamientos disponibles",
-                fontSize     = 18.sp,
-                fontWeight   = FontWeight.Bold,
-                modifier     = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            // Conteo + botón limpiar todo
+            Row(
+                modifier              = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "${parkings.size} estacionamiento${if (parkings.size != 1) "s" else ""}",
+                    fontSize   = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                if (hasActiveFilters || filters.sortByDistance) {
+                    TextButton(onClick = { listViewModel.clearFilters() }) {
+                        Text("Limpiar todo", color = BlueSecondary, fontSize = 12.sp)
+                    }
+                }
+            }
 
             if (parkings.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                Box(
+                    modifier         = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "Sin resultados",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            "Prueba ajustando los filtros",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.LightGray
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -226,7 +284,7 @@ fun BusquedaClientScreen(
                 ) {
                     items(parkings) { parking ->
                         SearchParkingCard(
-                            item          = parking,
+                            item           = parking,
                             onParkingClick = { id -> onParkingClick(id) }
                         )
                     }

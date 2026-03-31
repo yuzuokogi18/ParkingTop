@@ -1,5 +1,6 @@
 package com.example.parkingtop.features.cliente.BusquedaClient.data.datasources.mapper
 
+import android.util.Log
 import com.example.parkingtop.features.cliente.BusquedaClient.data.datasources.models.ParkingLotDTO
 import com.example.parkingtop.features.cliente.BusquedaClient.domain.entities.ParkingLot
 import com.example.parkingtop.features.cliente.BusquedaClient.domain.entities.ParkingMarker
@@ -35,4 +36,6 @@ fun ParkingLotDTO.toMarker() = ParkingMarker(
     availableSpots = availableSpots,
     rating         = ratingAverage.toDoubleOrNull() ?: 0.0,
     imageUrl       = images.firstOrNull()
-)
+).also {
+    Log.d("ParkingDebug", "mapped: ${it.name} lat=${it.latitude} lng=${it.longitude}")
+}
