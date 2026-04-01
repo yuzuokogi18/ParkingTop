@@ -18,6 +18,7 @@ import javax.inject.Singleton
 object NetworkModule {
 
     private const val BASE_URL = "https://api.parking-top.shop/"
+
     @Provides
     @Singleton
     fun provideJson(): Json = Json {
@@ -43,12 +44,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideParkingApi(okHttpClient: OkHttpClient, json: Json): ParkingApi {
+    fun provideRetrofit(okHttpClient: OkHttpClient, json: Json): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(ParkingApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideParkingApi(retrofit: Retrofit): ParkingApi {
+        return retrofit.create(ParkingApi::class.java)
     }
 }

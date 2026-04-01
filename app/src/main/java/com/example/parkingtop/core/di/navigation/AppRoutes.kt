@@ -6,6 +6,8 @@ object AppRoutes {
     const val REGISTER                = "register"
     const val SUBSCRIPTION            = "subscription"
     const val HOME_CLIENT             = "home_client"
+    const val HOME_OWNER              = "home_owner"
+    const val CREATE_PARKING          = "create_parking"
     const val BUSQUEDA                = "busqueda"
     const val DETALLE_ESTACIONAMIENTO = "detalle_estacionamiento/{parkingId}"
     const val RESERVA                 = "reserva"
@@ -13,7 +15,7 @@ object AppRoutes {
     const val CREATE_VEHICLE          = "create_vehicle"
     const val EDIT_VEHICLE            = "edit_vehicle/{vehicleId}/{licensePlate}/{brand}/{model}/{color}/{isDefault}"
     const val UPDATE_PROFILE          = "update_profile/{name}/{phone}/{imageUrl}"
-    const val NOTIFICATIONS           = "notifications"   // ✅ nueva ruta
+    const val NOTIFICATIONS           = "notifications"
 
     fun parkingDetail(parkingId: String) = "detalle_estacionamiento/$parkingId"
 

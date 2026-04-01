@@ -23,6 +23,10 @@ import com.example.parkingtop.features.login.presentation.screens.WelcomeScreen
 import com.example.parkingtop.features.register.presentation.screens.RegisterScreen
 import com.example.parkingtop.features.reservations.presentation.screens.ReservationScreen
 import com.example.parkingtop.features.subscritionplan.screens.SubscriptionPlanScreen
+import com.example.parkingtop.features.propetario.homepropetario.presentation.screens.HomePropetarioScreen
+import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens.CreateParkingScreen
+import com.example.parkingtop.features.propetario.reservationpropetario.presentation.screens.ReservationOwnerScreen
+import com.example.parkingtop.features.propetario.horariopropetario.presentation.screens.AvailabilityScreen
 
 @Composable
 fun AppNavigation() {
@@ -41,23 +45,31 @@ fun AppNavigation() {
         composable(AppRoutes.LOGIN) {
             LoginScreen(
                 onSubscription  = { navController.navigate(AppRoutes.SUBSCRIPTION) },
-                onHome          = { navController.navigate(AppRoutes.HOME_CLIENT) },
+                onHome          = { role -> 
+                    val route = if (role == "owner") AppRoutes.HOME_OWNER else AppRoutes.HOME_CLIENT
+                    navController.navigate(route) {
+                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                    }
+                },
                 onRegisterClick = { navController.navigate(AppRoutes.REGISTER) }
             )
         }
 
         composable(AppRoutes.REGISTER) {
             RegisterScreen(
-                onSubscription = { navController.navigate(AppRoutes.SUBSCRIPTION) },
-                onHome         = { navController.navigate(AppRoutes.HOME_CLIENT) },
-                onLoginClick   = { navController.navigate(AppRoutes.LOGIN) }
+                onRegisterSuccess = {
+                    navController.navigate(AppRoutes.LOGIN) {
+                        popUpTo(AppRoutes.REGISTER) { inclusive = true }
+                    }
+                },
+                onLoginClick = { navController.navigate(AppRoutes.LOGIN) }
             )
         }
 
         composable(AppRoutes.SUBSCRIPTION) {
             SubscriptionPlanScreen(
                 onBackClick    = { navController.popBackStack() },
-                onUpgradeClick = { navController.navigate(AppRoutes.HOME_CLIENT) }
+                onUpgradeClick = { navController.navigate(AppRoutes.HOME_OWNER) }
             )
         }
 
@@ -66,6 +78,20 @@ fun AppNavigation() {
                 onSearchClick  = { navController.navigate(AppRoutes.BUSQUEDA) },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
                 onParkingClick = { navController.navigate(AppRoutes.DETALLE_ESTACIONAMIENTO) }
+            )
+        }
+
+        composable(AppRoutes.HOME_OWNER) {
+            HomePropetarioScreen(
+                onAddParkingClick = { navController.navigate(AppRoutes.CREATE_PARKING) },
+                onParkingClick = { /* TODO */ }
+            )
+        }
+
+        composable(AppRoutes.CREATE_PARKING) {
+            CreateParkingScreen(
+                onBackClick = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
 
@@ -199,6 +225,15 @@ fun AppNavigation() {
             NotificationsScreen(
                 onBack = { navController.popBackStack() }
             )
+        }
+        
+        // Rutas faltantes del Propietario
+        composable("owner_reservations") {
+            ReservationOwnerScreen()
+        }
+        
+        composable("owner_availability") {
+            AvailabilityScreen()
         }
     }
 }

@@ -37,12 +37,11 @@ import com.example.parkingtop.ui.theme.TextPrimary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onSubscription: () -> Unit = {},
-    onHome: () -> Unit = {},
-    onRegisterClick: () -> Unit = {},
+    onSubscription: () -> Unit,
+    onHome: (String) -> Unit,
+    onRegisterClick: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ){
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -51,16 +50,9 @@ fun LoginScreen(
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
-
             when (state.role) {
-
-                "owner" -> {
-                    onSubscription()
-                }
-
-                "customer" -> {
-                    onHome()
-                }
+                "owner" -> onSubscription()
+                else -> onHome(state.role ?: "")
             }
         }
     }
@@ -100,28 +92,21 @@ fun LoginScreen(
                         containerColor = Color.White
                     )
                 )
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = Color(0xFFEEEEEE)
-                )
+                HorizontalDivider(thickness = 1.dp, color = Color(0xFFEEEEEE))
             }
         }
     ) { innerPadding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp)
         ) {
-
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
                 text = "¡Bienvenido de nuevo!",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = TextPrimary
             )
 
@@ -146,9 +131,7 @@ fun LoginScreen(
 
             Text(
                 "Correo Electrónico",
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = TextPrimary
             )
 
@@ -158,9 +141,7 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 placeholder = { Text("ejemplo@correo.com", color = Color.LightGray) },
-                leadingIcon = {
-                    Icon(Icons.Outlined.Email, contentDescription = null, tint = Color.Gray)
-                },
+                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null, tint = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -181,9 +162,7 @@ fun LoginScreen(
             ) {
                 Text(
                     "Contraseña",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                     color = TextPrimary
                 )
 
@@ -205,9 +184,7 @@ fun LoginScreen(
                 onValueChange = { password = it },
                 placeholder = { Text("••••••••", color = Color.LightGray) },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                leadingIcon = {
-                    Icon(Icons.Outlined.Lock, contentDescription = null, tint = Color.Gray)
-                },
+                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = Color.Gray) },
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -233,9 +210,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BlueSecondary
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = BlueSecondary),
                 enabled = !state.isLoading
             ) {
                 if (state.isLoading) {
@@ -244,9 +219,7 @@ fun LoginScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             "Iniciar sesión",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -262,21 +235,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
-                Text(
-                    " O CONTINÚA CON ",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = Color.Gray,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFEEEEEE))
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -284,12 +242,7 @@ fun LoginScreen(
                 Text(
                     text = buildAnnotatedString {
                         append("¿No tienes una cuenta? ")
-                        withStyle(
-                            SpanStyle(
-                                color = BlueSecondary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        ) {
+                        withStyle(SpanStyle(color = BlueSecondary, fontWeight = FontWeight.Bold)) {
                             append("Crear cuenta")
                         }
                     },
@@ -303,18 +256,12 @@ fun LoginScreen(
             Text(
                 text = buildAnnotatedString {
                     append("Al iniciar sesión, aceptas nuestros ")
-                    withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
-                        append("Términos de Servicio")
-                    }
+                    withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append("Términos de Servicio") }
                     append(" y ")
-                    withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
-                        append("Política de Privacidad")
-                    }
+                    withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append("Política de Privacidad") }
                     append(".")
                 },
-                style = MaterialTheme.typography.labelSmall.copy(
-                    lineHeight = 16.sp
-                ),
+                style = MaterialTheme.typography.labelSmall.copy(lineHeight = 16.sp),
                 color = Color.LightGray,
                 textAlign = TextAlign.Center,
                 modifier = Modifier

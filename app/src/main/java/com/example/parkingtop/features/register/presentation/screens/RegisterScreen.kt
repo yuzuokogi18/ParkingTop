@@ -51,8 +51,7 @@ import com.example.parkingtop.ui.theme.TextPrimary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onSubscription: () -> Unit,
-    onHome: () -> Unit,
+    onRegisterSuccess: () -> Unit,
     onLoginClick: () -> Unit,
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
@@ -78,10 +77,7 @@ fun RegisterScreen(
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
-            when (state.role) {
-                "owner" -> onSubscription()
-                "customer" -> onHome()
-            }
+            onRegisterSuccess()
         }
     }
 
