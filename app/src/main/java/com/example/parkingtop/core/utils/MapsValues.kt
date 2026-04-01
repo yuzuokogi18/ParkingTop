@@ -22,6 +22,8 @@ object MapsValues {
     const val PROP_ID         = "parkingId"
     const val PROP_NAME       = "parkingName"
 
+    const val PROP_PRICE = "parkingPrice"
+
     fun isInsideSanCristobal(latitude: Double, longitude: Double): Boolean {
         val distanceKm = haversineKm(
             SAN_CRISTOBAL.latitude, SAN_CRISTOBAL.longitude,

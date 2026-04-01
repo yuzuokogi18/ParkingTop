@@ -60,7 +60,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-
+    implementation(libs.play.services.location)
     implementation(libs.coil.compose)
 
     implementation(libs.maplibre.android)
@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.compose.ui.text)
     ksp(libs.hilt.compiler)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Network
     implementation(libs.retrofit)
