@@ -2,65 +2,98 @@ package com.example.parkingtop.features.propetario.crearestacionamiento.data.rep
 
 import com.example.parkingtop.core.datastore.TokenDataStore
 import com.example.parkingtop.core.network.ParkingApi
+import com.example.parkingtop.features.cliente.DetalleEstacionamientClient.data.datasources.models.ParkingLotDetailDTO
+import com.example.parkingtop.features.cliente.HomeClient.data.datasources.models.OperatingHoursDTO
+import com.example.parkingtop.features.propetario.crearestacionamiento.data.datasources.mapper.toDto
 import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.CreateParkingData
+import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.DayHours
+import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.OperatingHours
 import com.example.parkingtop.features.propetario.crearestacionamiento.domain.repositories.CreateParkingRepository
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 class CreateParkingRepositoryImpl @Inject constructor(
     private val api: ParkingApi,
     private val tokenDataStore: TokenDataStore
 ) : CreateParkingRepository {
+
     override suspend fun createParking(data: CreateParkingData): Result<Unit> {
         return try {
             val token = tokenDataStore.accessToken.firstOrNull() ?: ""
-            val authHeader = "Bearer $token"
+            if (token.isEmpty()) return Result.failure(Exception("No hay sesión activa"))
 
-            val name = data.name.toRequestBody("text/plain".toMediaTypeOrNull())
-            val address = data.address.toRequestBody("text/plain".toMediaTypeOrNull())
-            val city = data.city.toRequestBody("text/plain".toMediaTypeOrNull())
-            val state = data.state.toRequestBody("text/plain".toMediaTypeOrNull())
-            val latitude = data.latitude.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val longitude = data.longitude.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val totalSpots = data.totalSpots.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val basePrice = data.basePricePerHour.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val overtimeRate = data.overtimeRatePerHour.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            
-            // Convert list of features to JSON array string
-            val featuresJson = Json.encodeToString(data.features)
-            val featuresBody = featuresJson.toRequestBody("application/json".toMediaTypeOrNull())
+            val response = api.createParking("Bearer $token", data.toDto())
 
-            val imageParts = data.images.map { file ->
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                MultipartBody.Part.createFormData("images", file.name, requestFile)
-            }
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception(response.errorBody()?.string() ?: "Error al crear"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-            val response = api.createParking(
-                token = authHeader,
-                name = name,
-                address = address,
-                city = city,
-                state = state,
-                latitude = latitude,
-                longitude = longitude,
-                totalSpots = totalSpots,
-                basePrice = basePrice,
-                overtimeRate = overtimeRate,
-                features = featuresBody,
-                images = imageParts
-            )
+    override suspend fun getParkingById(id: String): Result<CreateParkingData> {
+        return try {
+            val response = api.getParkingById(id)
+            if (response.isSuccessful && response.body()?.data != null) {
+                val dto = response.body()!!.data!!
 
-            if (response.isSuccessful) {
-                Result.success(Unit)
+                val oh = dto.operatingHours
+                val operatingHours = OperatingHours(
+                    monday    = mapDay(oh?.get("monday")),
+                    tuesday   = mapDay(oh?.get("tuesday")),
+                    wednesday = mapDay(oh?.get("wednesday")),
+                    thursday  = mapDay(oh?.get("thursday")),
+                    friday    = mapDay(oh?.get("friday")),
+                    saturday  = mapDay(oh?.get("saturday")),
+                    sunday    = mapDay(oh?.get("sunday"))
+                )
+
+                Result.success(CreateParkingData(
+                    name = dto.name,
+                    description = dto.description ?: "",
+                    address = dto.address,
+                    city = dto.city ?: "",
+                    state = dto.state ?: "",
+                    postalCode = dto.postalCode ?: "",
+                    latitude = dto.latitude?.toDoubleOrNull() ?: 0.0,
+                    longitude = dto.longitude?.toDoubleOrNull() ?: 0.0,
+                    totalSpots = dto.availability.total,
+                    basePricePerHour = dto.pricing.basePricePerHour?.toDoubleOrNull() ?: 0.0,
+                    overtimeRatePerHour = dto.pricing.overtimeRatePerHour?.toDoubleOrNull() ?: 0.0,
+                    features = dto.features,
+                    operatingHours = operatingHours
+                ))
             } else {
-                Result.failure(Exception(response.message()))
+                Result.failure(Exception("Error al obtener datos"))
             }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun mapDay(dto: OperatingHoursDTO?): DayHours {
+        return DayHours(dto?.open ?: "08:00", dto?.close ?: "20:00")
+    }
+
+    override suspend fun updateParking(id: String, data: CreateParkingData): Result<Unit> {
+        return try {
+            val token = tokenDataStore.accessToken.firstOrNull() ?: ""
+            val response = api.updateParking("Bearer $token", id, data.toDto())
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception(response.errorBody()?.string() ?: "Error al actualizar"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteParking(id: String): Result<Unit> {
+        return try {
+            val token = tokenDataStore.accessToken.firstOrNull() ?: ""
+            if (token.isEmpty()) return Result.failure(Exception("No hay sesión activa"))
+            
+            val response = api.deleteParking("Bearer $token", id)
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al eliminar el estacionamiento"))
         } catch (e: Exception) {
             Result.failure(e)
         }

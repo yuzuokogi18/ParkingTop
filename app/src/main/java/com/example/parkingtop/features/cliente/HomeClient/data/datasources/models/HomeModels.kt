@@ -83,20 +83,6 @@ data class UserProfileDTO(
 )
 
 @Serializable
-data class ParkingLotDetailDTO(
-    val id: String,
-    val name: String,
-    val description: String?,
-    val address: String,
-    val images: List<String>,
-    val availability: AvailabilityDTO,
-    val pricing: PricingDTO,
-    val features: List<String>,
-    val ratingAverage: Double,
-    val reviews: List<ReviewDTO>
-)
-
-@Serializable
 data class AvailabilityDTO(
     val available: Int,
     val total: Int

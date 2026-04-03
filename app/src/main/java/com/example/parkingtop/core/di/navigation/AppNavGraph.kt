@@ -25,6 +25,7 @@ import com.example.parkingtop.features.reservations.presentation.screens.Reserva
 import com.example.parkingtop.features.subscritionplan.screens.SubscriptionPlanScreen
 import com.example.parkingtop.features.propetario.homepropetario.presentation.screens.HomePropetarioScreen
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens.CreateParkingScreen
+import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens.UpdateParkingScreen
 import com.example.parkingtop.features.propetario.reservationpropetario.presentation.screens.ReservationOwnerScreen
 import com.example.parkingtop.features.propetario.horariopropetario.presentation.screens.AvailabilityScreen
 
@@ -77,14 +78,24 @@ fun AppNavigation() {
             HomeClientScreen(
                 onSearchClick  = { navController.navigate(AppRoutes.BUSQUEDA) },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
-                onParkingClick = { navController.navigate(AppRoutes.DETALLE_ESTACIONAMIENTO) }
+                onParkingClick = { parking ->
+                    navController.navigate(AppRoutes.parkingDetail(parking.name, isOwner = false))
+                }
             )
         }
 
         composable(AppRoutes.HOME_OWNER) {
             HomePropetarioScreen(
                 onAddParkingClick = { navController.navigate(AppRoutes.CREATE_PARKING) },
-                onParkingClick = { /* TODO */ }
+                onParkingClick = { parkingId ->
+                    navController.navigate(AppRoutes.parkingDetail(parkingId, isOwner = true))
+                },
+                onEditParkingClick = { parkingId ->
+                    navController.navigate(AppRoutes.editParking(parkingId))
+                },
+                onReservationsClick = { navController.navigate("owner_reservations") },
+                onAvailabilityClick = { navController.navigate("owner_availability") },
+                onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
             )
         }
 
@@ -95,20 +106,40 @@ fun AppNavigation() {
             )
         }
 
+        composable(
+            route = AppRoutes.EDIT_PARKING,
+            arguments = listOf(navArgument("parkingId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val parkingId = backStackEntry.arguments?.getString("parkingId") ?: ""
+            UpdateParkingScreen(
+                parkingId = parkingId,
+                onBackClick = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
+            )
+        }
+
         composable(AppRoutes.BUSQUEDA) {
             BusquedaClientScreen(
                 onHomeClick    = { navController.navigate(AppRoutes.HOME_CLIENT) },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
                 onParkingClick = { parkingId ->
-                    navController.navigate(AppRoutes.parkingDetail(parkingId))
+                    navController.navigate(AppRoutes.parkingDetail(parkingId, isOwner = false))
                 }
             )
         }
 
-        composable(route = AppRoutes.DETALLE_ESTACIONAMIENTO) { backStackEntry ->
+        composable(
+            route = AppRoutes.DETALLE_ESTACIONAMIENTO,
+            arguments = listOf(
+                navArgument("parkingId") { type = NavType.StringType },
+                navArgument("isOwner")   { type = NavType.BoolType; defaultValue = false }
+            )
+        ) { backStackEntry ->
             val parkingId = backStackEntry.arguments?.getString("parkingId") ?: ""
+            val isOwner   = backStackEntry.arguments?.getBoolean("isOwner") ?: false
             DetalleEstacionamientoScreen(
                 parkingId      = parkingId,
+                isOwner        = isOwner,
                 onBackClick    = { navController.popBackStack() },
                 onReserveClick = { navController.navigate(AppRoutes.RESERVA) }
             )
@@ -153,6 +184,10 @@ fun AppNavigation() {
                     navController.navigate(AppRoutes.updateProfile(name, phone, imageUrl))
                 },
                 onNotificationsClick = { navController.navigate(AppRoutes.NOTIFICATIONS) },
+                // ✅ Configuración para PROPIETARIO desde su perfil
+                onDashboardClick     = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onReservationsClick  = { navController.navigate("owner_reservations") },
+                onAvailabilityClick  = { navController.navigate("owner_availability") },
                 viewModel            = profileViewModel
             )
         }
@@ -227,13 +262,21 @@ fun AppNavigation() {
             )
         }
         
-        // Rutas faltantes del Propietario
         composable("owner_reservations") {
-            ReservationOwnerScreen()
+            // ✅ Pasamos las acciones de navegación para la barra inferior de reservas
+            ReservationOwnerScreen(
+                onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onAvailabilityClick = { navController.navigate("owner_availability") },
+                onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
+            )
         }
         
         composable("owner_availability") {
-            AvailabilityScreen()
+            AvailabilityScreen(
+                onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onReservationsClick = { navController.navigate("owner_reservations") },
+                onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
+            )
         }
     }
 }

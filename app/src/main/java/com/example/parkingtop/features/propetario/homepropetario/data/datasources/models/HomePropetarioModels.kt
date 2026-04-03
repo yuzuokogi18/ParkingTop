@@ -6,14 +6,14 @@ import kotlinx.serialization.Serializable
 data class HomePropetarioResponse(
     val ownerName: String,
     val summary: SummaryDto,
-    val notifications: List<NotificationDto>,
-    val parkings: List<ParkingDto>
+    val notifications: List<NotificationDto> = emptyList(),
+    val parkings: List<ParkingDto> = emptyList()
 )
 
 @Serializable
 data class SummaryDto(
-    val occupationPercentage: Int,
-    val earnings: Double
+    val occupationPercentage: Int = 0,
+    val earnings: Double = 0.0
 )
 
 @Serializable
@@ -29,8 +29,8 @@ data class ParkingDto(
     val id: String,
     val name: String,
     val imageUrl: String? = null,
-    val occupiedSpaces: Int,
-    val totalSpaces: Int,
-    val reservationsCount: Int,
-    val rating: Float
+    val occupiedSpaces: Int = 0,
+    val totalSpaces: Int = 0,
+    val reservationsCount: Int = 0,
+    val rating: Float = 0f
 )

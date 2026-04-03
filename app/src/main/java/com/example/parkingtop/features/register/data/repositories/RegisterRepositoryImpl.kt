@@ -26,7 +26,6 @@ class RegisterRepositoryImpl @Inject constructor(
     ): Result<AuthResult> {
         return try {
             val response = if (profileImage != null) {
-                // ── Multipart request (with image) ─────────────────────────
                 val emailPart    = email.toRequestBody("text/plain".toMediaTypeOrNull())
                 val passwordPart = password.toRequestBody("text/plain".toMediaTypeOrNull())
                 val namePart     = fullName.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -53,7 +52,7 @@ class RegisterRepositoryImpl @Inject constructor(
                     profileImage = imagePart
                 )
             } else {
-                // ── JSON request (no image) ─────────────────────────────────
+
                 api.register(
                     RegisterRequest(
                         email    = email,

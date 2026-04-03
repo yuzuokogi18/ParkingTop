@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.example.parkingtop.ui.theme.TextPrimary
 
 data class ParkingItem(
+    val id: String, // ✅ Añadido ID
     val name: String,
     val distance: String,
     val price: String,
@@ -49,7 +50,7 @@ fun ParkingCard(parking: ParkingItem) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("€${parking.price}/h", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    Text("$${parking.price}/h", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     Surface(
                         color = if (parking.status == "Libre") Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
                         shape = RoundedCornerShape(8.dp)

@@ -131,7 +131,7 @@ fun SubscriptionPlanScreen(
                 features = listOf("basic analytics", "email support"),
                 trialPeriod = "7 días",
                 buttonText = "Plan Actual",
-                onButtonClick = {}
+                onButtonClick = onUpgradeClick // Corregido: Ahora navega al home
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -164,7 +164,7 @@ fun SubscriptionPlanScreen(
                 features = listOf("advanced analytics", "24/7 support", "api access"),
                 trialPeriod = "30 días",
                 buttonText = "Seleccionar Plan",
-                onButtonClick = {}
+                onButtonClick = onUpgradeClick // Corregido: Ahora navega al home
             )
 
             Spacer(modifier = Modifier.height(24.dp))

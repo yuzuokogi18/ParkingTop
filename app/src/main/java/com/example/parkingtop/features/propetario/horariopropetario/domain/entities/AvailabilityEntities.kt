@@ -23,7 +23,7 @@ enum class DayStatus {
 }
 
 data class OccupancyInfo(
-    val date: String, // e.g., "Martes, 20 Agosto"
+    val date: String,
     val occupiedSpaces: Int,
     val totalSpaces: Int,
     val percentage: Int

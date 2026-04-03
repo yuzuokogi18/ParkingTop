@@ -6,27 +6,43 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.CreateParkingData
 import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.OperatingHours
-import com.example.parkingtop.features.propetario.crearestacionamiento.domain.usecases.CreateParkingUseCase
+import com.example.parkingtop.features.propetario.crearestacionamiento.domain.repositories.CreateParkingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
-data class CreateParkingState(
+data class UpdateParkingState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
+    val parkingData: CreateParkingData? = null,
     val error: String? = null
 )
 
 @HiltViewModel
-class CreateParkingViewModel @Inject constructor(
-    private val createParkingUseCase: CreateParkingUseCase
+class UpdateParkingViewModel @Inject constructor(
+    private val repository: CreateParkingRepository
 ) : ViewModel() {
 
-    private val _state = mutableStateOf(CreateParkingState())
-    val state: State<CreateParkingState> = _state
+    private val _state = mutableStateOf(UpdateParkingState())
+    val state: State<UpdateParkingState> = _state
 
-    fun createParking(
+    fun loadParking(id: String) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true, error = null)
+            repository.getParkingById(id).fold(
+                onSuccess = { data ->
+                    _state.value = _state.value.copy(isLoading = false, parkingData = data)
+                },
+                onFailure = { error ->
+                    _state.value = _state.value.copy(isLoading = false, error = error.message)
+                }
+            )
+        }
+    }
+
+    fun updateParking(
+        id: String,
         name: String,
         description: String,
         address: String,
@@ -43,7 +59,7 @@ class CreateParkingViewModel @Inject constructor(
         images: List<File>
     ) {
         viewModelScope.launch {
-            _state.value = CreateParkingState(isLoading = true)
+            _state.value = _state.value.copy(isLoading = true, error = null)
             
             val data = CreateParkingData(
                 name = name,
@@ -62,12 +78,12 @@ class CreateParkingViewModel @Inject constructor(
                 images = images
             )
 
-            createParkingUseCase(data).fold(
+            repository.updateParking(id, data).fold(
                 onSuccess = {
-                    _state.value = CreateParkingState(isSuccess = true)
+                    _state.value = _state.value.copy(isLoading = false, isSuccess = true)
                 },
                 onFailure = { error ->
-                    _state.value = CreateParkingState(error = error.message ?: "Error al crear estacionamiento")
+                    _state.value = _state.value.copy(isLoading = false, error = error.message)
                 }
             )
         }

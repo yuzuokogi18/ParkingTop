@@ -34,7 +34,6 @@ fun AvailabilityCalendar(
         border = BorderStroke(1.dp, Color(0xFFEEEEEE))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Calendar Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -53,8 +52,6 @@ fun AvailabilityCalendar(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Week Days
             Row(modifier = Modifier.fillMaxWidth()) {
                 val weekDays = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
                 weekDays.forEach { day ->
@@ -70,9 +67,7 @@ fun AvailabilityCalendar(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Days Grid (Simplified logic for the example layout)
-            // Assuming 28 days for February starting on Sunday as per image
-            val emptyCellsBefore = 6 // Empty cells before day 1
+            val emptyCellsBefore = 6
             
             Column {
                 var currentDayIndex = 0
@@ -96,7 +91,7 @@ fun AvailabilityCalendar(
 
 @Composable
 fun DayCell(day: CalendarDay) {
-    val isSelected = day.day == 11 // Mocking selection for day 11
+    val isSelected = day.day == 11
     val borderColor = if (isSelected) BlueSecondary else Color(0xFFEEEEEE)
     
     Column(
@@ -112,8 +107,7 @@ fun DayCell(day: CalendarDay) {
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
             color = TextPrimary
         )
-        
-        // Status indicator text below day number if applicable
+
         when (day.status) {
             DayStatus.PARTIAL -> {
                 Text(
