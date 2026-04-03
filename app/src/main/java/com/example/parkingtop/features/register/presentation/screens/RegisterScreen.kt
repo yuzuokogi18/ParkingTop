@@ -64,7 +64,6 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("Cliente") }
 
-    // Image state
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -148,7 +147,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ── PROFILE IMAGE PICKER ──────────────────────────────────────
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -187,7 +185,6 @@ fun RegisterScreen(
                     }
                 }
 
-                // Small edit badge when image is selected
                 if (selectedImageUri != null) {
                     Box(
                         modifier = Modifier
@@ -218,7 +215,7 @@ fun RegisterScreen(
                 color = Color.Gray,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            // ─────────────────────────────────────────────────────────────
+
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -250,7 +247,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // CONTRASEÑA
             Text(
                 "Contraseña",
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -292,7 +288,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ROL SELECTION
+
             Text(
                 "¿Cómo usarás la app?",
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -321,11 +317,10 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // BOTÓN REGISTRO
             Button(
                 onClick = {
                     val role = if (selectedRole == "Cliente") "customer" else "owner"
-                    // Convert URI → File only when the user taps register
+
                     val imageFile = selectedImageUri?.let { uriToFile(context, it) }
                     viewModel.register(
                         email = email,

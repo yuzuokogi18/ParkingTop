@@ -93,12 +93,12 @@ fun HomeClientScreen(
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { /* Already here */ },
-                        icon = { 
+                        icon = {
                             Icon(
-                                imageVector = Icons.Default.Home, 
+                                imageVector = Icons.Default.Home,
                                 contentDescription = "Home",
                                 modifier = Modifier.size(20.dp)
-                            ) 
+                            )
                         },
                         label = { Text("Home", fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(
@@ -112,12 +112,12 @@ fun HomeClientScreen(
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = onSearchClick,
-                        icon = { 
+                        icon = {
                             Icon(
-                                imageVector = Icons.Default.Search, 
+                                imageVector = Icons.Default.Search,
                                 contentDescription = "Buscar",
                                 modifier = Modifier.size(20.dp)
-                            ) 
+                            )
                         },
                         label = { Text("Buscar", fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(
@@ -131,12 +131,12 @@ fun HomeClientScreen(
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = onProfileClick,
-                        icon = { 
+                        icon = {
                             Icon(
-                                imageVector = Icons.Default.Person, 
+                                imageVector = Icons.Default.Person,
                                 contentDescription = "Perfil",
                                 modifier = Modifier.size(20.dp)
-                            ) 
+                            )
                         },
                         label = { Text("Perfil", fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(
@@ -197,10 +197,10 @@ fun HomeClientScreen(
                     .weight(1f)
             ) {
                 val sampleParkings = listOf(
-                    ParkingItem("Parking Central", "0.5 km", "2.50", "Libre", 4.8f, 1),
-                    ParkingItem("Estacionamiento Rápido", "1.2 km", "2.00", "Ocupado", 4.2f, 2),
-                    ParkingItem("Parking Seguro", "0.8 km", "3.00", "Libre", 4.5f, 3),
-                    ParkingItem("Gran Parking Express", "1.5 km", "2.75", "Libre", 4.7f, 4)
+                    ParkingItem("1", "Parking Central", "0.5 km", "2.50", "Libre", 4.8f, 1),
+                    ParkingItem("2", "Estacionamiento Rápido", "1.2 km", "2.00", "Ocupado", 4.2f, 2),
+                    ParkingItem("3", "Parking Seguro", "0.8 km", "3.00", "Libre", 4.5f, 3),
+                    ParkingItem("4", "Gran Parking Express", "1.5 km", "2.75", "Libre", 4.7f, 4)
                 )
                 items(sampleParkings) { parking ->
                     Box(modifier = Modifier.clickable { onParkingClick(parking) }) {

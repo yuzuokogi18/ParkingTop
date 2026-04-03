@@ -13,7 +13,7 @@ fun ParkingLotDetailDTO.toDomain(): ParkingLot {
         availability = availability,
         pricing = pricing,
         features = features,
-        ratingAverage = ratingAverage,
+        ratingAverage = ratingAverage?.toDoubleOrNull() ?: 0.0,
         reviews= reviews,
     )
 }

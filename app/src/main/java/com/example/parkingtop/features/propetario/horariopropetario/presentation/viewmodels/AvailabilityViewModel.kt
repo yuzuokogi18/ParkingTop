@@ -38,10 +38,24 @@ class AvailabilityViewModel @Inject constructor(
                     _state.value = _state.value.copy(isLoading = false, data = data)
                 },
                 onFailure = { error ->
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Error al cargar disponibilidad"
-                    )
+                    val errorMessage = error.message ?: ""
+
+                    if (errorMessage.contains("404") || errorMessage.contains("not found", ignoreCase = true)) {
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            data = AvailabilityData(
+                                isPublished = false,
+                                calendarDays = emptyList(),
+                                expectedOccupancy = emptyList()
+                            ),
+                            error = null
+                        )
+                    } else {
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            error = errorMessage
+                        )
+                    }
                 }
             )
         }
@@ -49,14 +63,12 @@ class AvailabilityViewModel @Inject constructor(
 
     fun togglePublishStatus(isPublished: Boolean) {
         viewModelScope.launch {
-            // Optimistic update
             val currentData = _state.value.data
             if (currentData != null) {
                 _state.value = _state.value.copy(data = currentData.copy(isPublished = isPublished))
             }
 
             updatePublishStatusUseCase(isPublished).onFailure { error ->
-                // Rollback if failed
                 _state.value = _state.value.copy(
                     data = currentData,
                     error = "Error al actualizar estado: ${error.message}"

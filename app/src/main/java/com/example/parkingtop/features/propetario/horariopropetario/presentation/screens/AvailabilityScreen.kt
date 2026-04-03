@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -26,6 +30,9 @@ import com.example.parkingtop.ui.theme.TextPrimary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvailabilityScreen(
+    onDashboardClick: () -> Unit,
+    onReservationsClick: () -> Unit,
+    onProfileClick: () -> Unit,
     viewModel: AvailabilityViewModel = hiltViewModel()
 ) {
     val state by viewModel.state
@@ -36,6 +43,56 @@ fun AvailabilityScreen(
                 title = { Text("Disponibilidad y Horario", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
+        },
+        bottomBar = {
+            Column {
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f), thickness = 1.dp)
+                NavigationBar(
+                    containerColor = Color.White,
+                    tonalElevation = 0.dp
+                ) {
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = onDashboardClick,
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        label = { Text("Panel", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = onReservationsClick,
+                        icon = { Icon(Icons.Default.List, contentDescription = null) },
+                        label = { Text("Reservas", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                    )
+                    NavigationBarItem(
+                        selected = true,
+                        onClick = { },
+                        icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                        label = { 
+                            Text(
+                                "Disponibilidad", 
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Visible
+                            ) 
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueSecondary,
+                            selectedTextColor = BlueSecondary,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = onProfileClick,
+                        icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        label = { Text("Perfil", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                    )
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -55,16 +112,13 @@ fun AvailabilityScreen(
                 Text(text = state.error!!, color = Color.Red)
             } else {
                 state.data?.let { data ->
-                    // Estado del Estacionamiento
                     PublishStatusCard(
                         isPublished = data.isPublished,
                         onToggle = { viewModel.togglePublishStatus(it) }
                     )
 
-                    // Calendario
                     AvailabilityCalendar(days = data.calendarDays)
 
-                    // Ocupación Esperada
                     OccupancyExpectedCard(occupancyList = data.expectedOccupancy)
                 }
             }

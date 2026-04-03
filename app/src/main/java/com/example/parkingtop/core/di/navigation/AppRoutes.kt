@@ -8,8 +8,9 @@ object AppRoutes {
     const val HOME_CLIENT             = "home_client"
     const val HOME_OWNER              = "home_owner"
     const val CREATE_PARKING          = "create_parking"
+    const val EDIT_PARKING            = "edit_parking/{parkingId}"
     const val BUSQUEDA                = "busqueda"
-    const val DETALLE_ESTACIONAMIENTO = "detalle_estacionamiento/{parkingId}"
+    const val DETALLE_ESTACIONAMIENTO = "detalle_estacionamiento/{parkingId}?isOwner={isOwner}"
     const val RESERVA                 = "reserva"
     const val PERFIL                  = "perfil"
     const val CREATE_VEHICLE          = "create_vehicle"
@@ -17,7 +18,10 @@ object AppRoutes {
     const val UPDATE_PROFILE          = "update_profile/{name}/{phone}/{imageUrl}"
     const val NOTIFICATIONS           = "notifications"
 
-    fun parkingDetail(parkingId: String) = "detalle_estacionamiento/$parkingId"
+    fun parkingDetail(parkingId: String, isOwner: Boolean = false) = 
+        "detalle_estacionamiento/$parkingId?isOwner=$isOwner"
+
+    fun editParking(parkingId: String) = "edit_parking/$parkingId"
 
     fun editVehicle(
         vehicleId: String, licensePlate: String, brand: String,

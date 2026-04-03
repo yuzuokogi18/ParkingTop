@@ -1,5 +1,9 @@
 package com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,17 +22,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.DayHours
+import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.OperatingHours
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.components.FormSection
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.components.FormSwitch
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.components.FormTextField
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.viewmodels.CreateParkingViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,20 +46,35 @@ fun CreateParkingScreen(
     onSuccess: () -> Unit,
     viewModel: CreateParkingViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
     var stateStr by remember { mutableStateOf("") }
-    var latitude by remember { mutableStateOf("-34.6037") }
-    var longitude by remember { mutableStateOf("-58.3816") }
+    var postalCode by remember { mutableStateOf("") }
+    var latitude by remember { mutableStateOf("16.7516") }
+    var longitude by remember { mutableStateOf("-93.1029") }
     
-    var basePrice by remember { mutableStateOf("150.00") }
-    var overtimeRate by remember { mutableStateOf("100.00") }
-    var totalSpots by remember { mutableStateOf("50") }
+    var basePrice by remember { mutableStateOf("15.00") }
+    var overtimeRate by remember { mutableStateOf("20.00") }
+    var totalSpots by remember { mutableStateOf("25") }
     
     var isCovered by remember { mutableStateOf(false) }
     var hasCctv by remember { mutableStateOf(true) }
     var hasSecurity by remember { mutableStateOf(false) }
+
+    val days = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+    val dayChecks = remember { mutableStateListOf(true, true, true, true, true, false, false) }
+    val openTimes = remember { mutableStateListOf("08:00", "08:00", "08:00", "08:00", "08:00", "09:00", "10:00") }
+    val closeTimes = remember { mutableStateListOf("20:00", "20:00", "20:00", "20:00", "22:00", "23:00", "18:00") }
+
+    var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5),
+        onResult = { uris -> selectedImageUris = uris }
+    )
 
     val state by viewModel.state
 
@@ -80,67 +104,108 @@ fun CreateParkingScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Información Básica
             FormSection(title = "Información Básica") {
-                FormTextField(label = "Nombre del Estacionamiento", value = name, onValueChange = { name = it }, placeholder = "Ej. Estacionamiento Central")
-                FormTextField(label = "Dirección", value = address, onValueChange = { address = it }, placeholder = "Calle Principal 123")
+                FormTextField(label = "Nombre", value = name, onValueChange = { name = it }, placeholder = "Ej. Estacionamiento Centro")
+                FormTextField(label = "Descripción", value = description, onValueChange = { description = it }, placeholder = "Breve descripción...")
+                FormTextField(label = "Dirección", value = address, onValueChange = { address = it }, placeholder = "Avenida Central Norte 123")
+                
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FormTextField(modifier = Modifier.weight(1f), label = "Ciudad", value = city, onValueChange = { city = it }, placeholder = "Ej. CDMX")
-                    FormTextField(modifier = Modifier.weight(1f), label = "Estado", value = stateStr, onValueChange = { stateStr = it }, placeholder = "Ej. CDMX")
+                    FormTextField(modifier = Modifier.weight(1f), label = "Ciudad", value = city, onValueChange = { city = it }, placeholder = "Tuxtla Gtz")
+                    FormTextField(modifier = Modifier.weight(1f), label = "Estado", value = stateStr, onValueChange = { stateStr = it }, placeholder = "Chiapas")
                 }
+                
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FormTextField(modifier = Modifier.weight(1f), label = "Latitud", value = latitude, onValueChange = { latitude = it }, placeholder = "-34.6037")
-                    FormTextField(modifier = Modifier.weight(1f), label = "Longitud", value = longitude, onValueChange = { longitude = it }, placeholder = "-58.3816")
+                    FormTextField(modifier = Modifier.weight(1f), label = "C.P.", value = postalCode, onValueChange = { postalCode = it }, placeholder = "29000")
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    FormTextField(modifier = Modifier.weight(1f), label = "Latitud", value = latitude, onValueChange = { latitude = it }, placeholder = "16.7516")
+                    FormTextField(modifier = Modifier.weight(1f), label = "Longitud", value = longitude, onValueChange = { longitude = it }, placeholder = "-93.1029")
                 }
             }
 
-            // Fotos
             FormSection(title = "Fotos del Estacionamiento") {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
+                        .height(140.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF9F9F9))
+                        .background(Color(0xFFF5F5F5))
                         .border(1.dp, Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                        .clickable { /* TODO: Pick images */ },
+                        .clickable { 
+                            photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = Color.Gray)
-                        Text("Toca para subir fotos", color = Color.Gray, fontSize = 12.sp)
+                        Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(32.dp))
                         Spacer(modifier = Modifier.height(8.dp))
+                        Text("Toca para subir fotos", color = Color.Gray, fontSize = 12.sp)
                         Text("Subir Fotos", color = TextPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
                 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    repeat(3) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color.LightGray)
-                        ) {
-                             AsyncImage(
-                                model = "https://via.placeholder.com/150",
+                if (selectedImageUris.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        selectedImageUris.take(3).forEach { uri ->
+                            AsyncImage(
+                                model = uri,
                                 contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                             )
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
                         }
                     }
                 }
             }
 
-            // Tarifas y Capacidad
-            FormSection(title = "Tarifas y Capacidad") {
-                FormTextField(label = "Precio Base por Hora", value = basePrice, onValueChange = { basePrice = it }, placeholder = "150.00", leadingIcon = { Text("$", color = Color.Gray, modifier = Modifier.padding(start = 12.dp)) })
-                FormTextField(label = "Precio por Hora Extra", value = overtimeRate, onValueChange = { overtimeRate = it }, placeholder = "100.00", leadingIcon = { Text("$", color = Color.Gray, modifier = Modifier.padding(start = 12.dp)) })
-                FormTextField(label = "Total de Espacios", value = totalSpots, onValueChange = { totalSpots = it }, placeholder = "50", leadingIcon = { Icon(Icons.Outlined.DirectionsCar, contentDescription = null, tint = Color.Gray) })
+            FormSection(title = "Horarios de Operación") {
+                days.forEachIndexed { index, day ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Checkbox(
+                            checked = dayChecks[index],
+                            onCheckedChange = { dayChecks[index] = it },
+                            colors = CheckboxDefaults.colors(checkedColor = BlueSecondary)
+                        )
+                        Text(text = day, modifier = Modifier.width(80.dp), fontWeight = FontWeight.Medium)
+                        
+                        OutlinedTextField(
+                            value = openTimes[index],
+                            onValueChange = { openTimes[index] = it },
+                            modifier = Modifier.weight(1f),
+                            textStyle = MaterialTheme.typography.bodySmall,
+                            enabled = dayChecks[index],
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        Text("-")
+                        OutlinedTextField(
+                            value = closeTimes[index],
+                            onValueChange = { closeTimes[index] = it },
+                            modifier = Modifier.weight(1f),
+                            textStyle = MaterialTheme.typography.bodySmall,
+                            enabled = dayChecks[index],
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
             }
 
-            // Características
+            FormSection(title = "Tarifas y Capacidad") {
+                FormTextField(label = "Precio Base por Hora", value = basePrice, onValueChange = { basePrice = it }, placeholder = "15.00", leadingIcon = { Text("$", color = Color.Gray, modifier = Modifier.padding(start = 12.dp)) })
+                FormTextField(label = "Precio por Hora Extra", value = overtimeRate, onValueChange = { overtimeRate = it }, placeholder = "20.00", leadingIcon = { Text("$", color = Color.Gray, modifier = Modifier.padding(start = 12.dp)) })
+                FormTextField(label = "Total de Espacios", value = totalSpots, onValueChange = { totalSpots = it }, placeholder = "25", leadingIcon = { Icon(Icons.Outlined.DirectionsCar, contentDescription = null, tint = Color.Gray) })
+            }
+
             FormSection(title = "Características") {
                 FormSwitch(label = "Techado", checked = isCovered, onCheckedChange = { isCovered = it })
                 FormSwitch(label = "Cámaras de Seguridad (CCTV)", checked = hasCctv, onCheckedChange = { hasCctv = it })
@@ -154,22 +219,46 @@ fun CreateParkingScreen(
             Button(
                 onClick = { 
                     val features = mutableListOf<String>()
-                    if (isCovered) features.add("covered")
+                    if (isCovered) features.add("techado")
                     if (hasCctv) features.add("cctv")
-                    if (hasSecurity) features.add("security")
+                    if (hasSecurity) features.add("vigilancia")
+                    features.add("iluminado")
+
+                    val operatingHours = OperatingHours(
+                        monday = DayHours(openTimes[0], closeTimes[0]),
+                        tuesday = DayHours(openTimes[1], closeTimes[1]),
+                        wednesday = DayHours(openTimes[2], closeTimes[2]),
+                        thursday = DayHours(openTimes[3], closeTimes[3]),
+                        friday = DayHours(openTimes[4], closeTimes[4]),
+                        saturday = DayHours(openTimes[5], closeTimes[5]),
+                        sunday = DayHours(openTimes[6], closeTimes[6])
+                    )
+
+                    val imageFiles = selectedImageUris.mapNotNull { uri ->
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(uri)
+                            val file = File(context.cacheDir, "parking_img_${System.currentTimeMillis()}.jpg")
+                            val outputStream = FileOutputStream(file)
+                            inputStream?.use { input -> outputStream.use { output -> input.copyTo(output) } }
+                            file
+                        } catch (e: Exception) { null }
+                    }
 
                     viewModel.createParking(
                         name = name,
+                        description = description,
                         address = address,
                         city = city,
                         state = stateStr,
+                        postalCode = postalCode,
                         latitude = latitude.toDoubleOrNull() ?: 0.0,
                         longitude = longitude.toDoubleOrNull() ?: 0.0,
                         totalSpots = totalSpots.toIntOrNull() ?: 0,
                         basePricePerHour = basePrice.toDoubleOrNull() ?: 0.0,
                         overtimeRatePerHour = overtimeRate.toDoubleOrNull() ?: 0.0,
                         features = features,
-                        images = emptyList()
+                        operatingHours = operatingHours,
+                        images = imageFiles
                     )
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp).padding(bottom = 8.dp),
@@ -178,7 +267,7 @@ fun CreateParkingScreen(
                 enabled = !state.isLoading
             ) {
                 if (state.isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                else Text("Guardar Cambios", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                else Text("Guardar Estacionamiento", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
