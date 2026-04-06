@@ -1,4 +1,14 @@
 package com.example.parkingtop.features.cliente.ReservaClient.domain.entities
+
+data class Vehicle(
+    val id: String,
+    val brand: String,
+    val model: String,
+    val licensePlate: String,
+    val isDefault: Boolean = false   // ✅ nuevo campo
+)
+
+
 data class ParkingLot(
     val id: String,
     val name: String,
@@ -7,18 +17,11 @@ data class ParkingLot(
     val overtimeRatePerHour: Double
 )
 
-data class Vehicle(
-    val id: String,
-    val brand: String,
-    val model: String,
-    val licensePlate: String
-)
-
 data class ReservationRequest(
     val parkingLotId: String,
     val vehicleId: String,
-    val startTime: String, // ISO 8601 format
-    val endTime: String,   // ISO 8601 format
+    val startTime: String,
+    val endTime: String,
     val notes: String? = null
 )
 
@@ -32,6 +35,26 @@ data class PriceCalculation(
     val hours: Int,
     val baseCost: Double,
     val additionalTime: Double = 0.0,
-    val discounts: Double = 0.0,
+    val discounts: Double     = 0.0,
     val total: Double
+)
+
+data class ParkingSpot(
+    val id: String,
+    val spotNumber: String,
+    val status: String,
+    val vehicleType: String,
+    val floor: String?,
+    val section: String?,
+    val isAvailable: Boolean
+)
+
+data class ReservationResult(
+    val reservationId: String,
+    val reservationCode: String,
+    val paymentUrl: String?,     // URL de MercadoPago (null si es efectivo)
+    val paymentMethod: String,
+    val totalCost: Double,
+    val isCash: Boolean,         // true = pagar al llegar
+    val message: String?
 )

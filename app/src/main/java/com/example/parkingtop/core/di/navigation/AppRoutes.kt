@@ -21,6 +21,16 @@ object AppRoutes {
 
     fun createParking(isFirst: Boolean = false) = "create_parking?isFirst=$isFirst"
 
+
+    fun reservaClient(parkingIdClient: String) = "reserva_client/$parkingIdClient"
+
+
+
+    const val RESERVA_CLIENT = "reserva_client/{parkingIdClient}"
+
+
+
+
     fun parkingDetail(parkingId: String, isOwner: Boolean = false) = 
         "detalle_estacionamiento/$parkingId?isOwner=$isOwner"
 
