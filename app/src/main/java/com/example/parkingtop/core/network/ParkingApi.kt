@@ -9,6 +9,10 @@ import com.example.parkingtop.features.cliente.HomeClient.data.datasources.model
 import com.example.parkingtop.features.cliente.HomeClient.data.datasources.models.UserProfileDTO
 import com.example.parkingtop.features.cliente.Notifications.data.datasources.models.MarkAllReadDTO
 import com.example.parkingtop.features.cliente.Notifications.data.datasources.models.NotificationDTO
+import com.example.parkingtop.features.cliente.ReservaClient.data.datasources.models.CreateReservationRequest
+import com.example.parkingtop.features.cliente.ReservaClient.data.datasources.models.CreateReservationResponseDTO
+import com.example.parkingtop.features.cliente.ReservaClient.data.datasources.models.ParkingSpotDTO
+import com.example.parkingtop.features.cliente.ReservaClient.data.datasources.models.ReservationVehicleDTO
 import com.example.parkingtop.features.cliente.Notifications.data.datasources.models.UnreadCountDTO
 import com.example.parkingtop.features.cliente.Perfil.data.datasources.models.ReservationDTO
 import com.example.parkingtop.features.cliente.Perfil.data.datasources.models.UserDTO
@@ -256,4 +260,30 @@ interface ParkingApi {
         @Header("Authorization") bearerToken: String,
         @Path("id") id: String
     ): Response<ApiResponse<DeleteMessageDto>>
+
+
+
+    @GET("v1/parking-spots/parking-lot/{parkingLotId}")
+    suspend fun getParkingSpots(
+        @Path("parkingLotId") parkingLotId: String,
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<List<ParkingSpotDTO>>>
+
+    @POST("v1/reservations")
+    suspend fun createReservation(
+        @Header("Authorization") token: String,
+        @Body request: CreateReservationRequest
+    ): Response<ApiResponse<CreateReservationResponseDTO>>
+
+
+    @GET("v1/vehicles")
+    suspend fun getVehiclesClient(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<List<ReservationVehicleDTO>>>
+
+    @GET("v1/vehicles/default")
+    suspend fun getDefaultVehicle(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<ReservationVehicleDTO>>
+
 }
