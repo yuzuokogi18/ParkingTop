@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,6 +38,7 @@ fun ProfileClientScreen(
     onDashboardClick: () -> Unit = {},
     onReservationsClick: () -> Unit = {},
     onAvailabilityClick: () -> Unit = {},
+    onMySpacesClick: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state = viewModel.state.value
@@ -69,25 +69,31 @@ fun ProfileClientScreen(
                         NavigationBarItem(
                             selected = false, onClick = onDashboardClick,
                             icon = { Icon(Icons.Default.Home, null) },
-                            label = { Text("Panel", fontSize = 11.sp) },
+                            label = { Text("Panel", fontSize = 9.sp) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                         )
                         NavigationBarItem(
                             selected = false, onClick = onReservationsClick,
                             icon = { Icon(Icons.Default.List, null) },
-                            label = { Text("Reservas", fontSize = 11.sp) },
+                            label = { Text("Reservas", fontSize = 9.sp) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                         )
                         NavigationBarItem(
                             selected = false, onClick = onAvailabilityClick,
                             icon = { Icon(Icons.Default.DateRange, null) },
-                            label = { Text("Disponibilidad", fontSize = 11.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Visible) },
+                            label = { Text("Horario", fontSize = 9.sp) },
+                            colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                        )
+                        NavigationBarItem(
+                            selected = false, onClick = onMySpacesClick,
+                            icon = { Icon(Icons.Default.DirectionsCar, null) },
+                            label = { Text("Espacios", fontSize = 9.sp) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                         )
                         NavigationBarItem(
                             selected = true, onClick = { },
                             icon = { Icon(Icons.Default.Person, null) },
-                            label = { Text("Perfil", fontSize = 11.sp) },
+                            label = { Text("Perfil", fontSize = 9.sp) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = BlueSecondary,
                                 selectedTextColor = BlueSecondary,

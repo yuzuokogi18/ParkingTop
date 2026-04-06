@@ -8,7 +8,7 @@ object AppRoutes {
     const val HOME_CLIENT             = "home_client"
     const val HOME_OWNER              = "home_owner"
     const val MY_SPACES               = "my_spaces"
-    const val CREATE_PARKING          = "create_parking"
+    const val CREATE_PARKING          = "create_parking?isFirst={isFirst}"
     const val EDIT_PARKING            = "edit_parking/{parkingId}"
     const val BUSQUEDA                = "busqueda"
     const val DETALLE_ESTACIONAMIENTO = "detalle_estacionamiento/{parkingId}?isOwner={isOwner}"
@@ -18,6 +18,8 @@ object AppRoutes {
     const val EDIT_VEHICLE            = "edit_vehicle/{vehicleId}/{licensePlate}/{brand}/{model}/{color}/{isDefault}"
     const val UPDATE_PROFILE          = "update_profile/{name}/{phone}/{imageUrl}"
     const val NOTIFICATIONS           = "notifications"
+
+    fun createParking(isFirst: Boolean = false) = "create_parking?isFirst=$isFirst"
 
     fun parkingDetail(parkingId: String, isOwner: Boolean = false) = 
         "detalle_estacionamiento/$parkingId?isOwner=$isOwner"

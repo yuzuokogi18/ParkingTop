@@ -1,5 +1,7 @@
 package com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.*
@@ -27,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.DayHours
@@ -37,6 +41,7 @@ import com.example.parkingtop.features.propetario.crearestacionamiento.presentat
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.viewmodels.UpdateParkingViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
+import com.google.android.gms.location.LocationServices
 import java.io.File
 import java.io.FileOutputStream
 
@@ -49,6 +54,7 @@ fun UpdateParkingScreen(
     viewModel: UpdateParkingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val state by viewModel.state
 
     var name by remember { mutableStateOf("") }
@@ -67,6 +73,8 @@ fun UpdateParkingScreen(
     var isCovered by remember { mutableStateOf(false) }
     var hasCctv by remember { mutableStateOf(false) }
     var hasSecurity by remember { mutableStateOf(false) }
+
+    var showSuccessDialog by remember { mutableStateOf(false) }
 
     val days = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
     val dayChecks = remember { mutableStateListOf(true, true, true, true, true, false, false) }
@@ -107,7 +115,46 @@ fun UpdateParkingScreen(
     }
 
     LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) onSuccess()
+        if (state.isSuccess) {
+            showSuccessDialog = true
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                try {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        location?.let {
+                            latitude = it.latitude.toString()
+                            longitude = it.longitude.toString()
+                        }
+                    }
+                } catch (e: SecurityException) { }
+            }
+        }
+    )
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("¡Éxito!", fontWeight = FontWeight.Bold) },
+            text = { Text("Estacionamiento actualizado correctamente.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        onSuccess()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BlueSecondary)
+                ) {
+                    Text("Aceptar", color = Color.White)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -157,9 +204,37 @@ fun UpdateParkingScreen(
                         Spacer(modifier = Modifier.weight(1f))
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        FormTextField(modifier = Modifier.weight(1f), label = "Latitud", value = latitude, onValueChange = { latitude = it }, placeholder = "16.7516")
-                        FormTextField(modifier = Modifier.weight(1f), label = "Longitud", value = longitude, onValueChange = { longitude = it }, placeholder = "-93.1029")
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Ubicación (Coordenadas)", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold), color = TextPrimary)
+                            TextButton(
+                                onClick = {
+                                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                            location?.let {
+                                                latitude = it.latitude.toString()
+                                                longitude = it.longitude.toString()
+                                            }
+                                        }
+                                    } else {
+                                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                    }
+                                },
+                                colors = ButtonDefaults.textButtonColors(contentColor = BlueSecondary)
+                            ) {
+                                Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Obtener GPS")
+                            }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            FormTextField(modifier = Modifier.weight(1f), label = "Latitud", value = latitude, onValueChange = { latitude = it }, placeholder = "16.7516")
+                            FormTextField(modifier = Modifier.weight(1f), label = "Longitud", value = longitude, onValueChange = { longitude = it }, placeholder = "-93.1029")
+                        }
                     }
                 }
 

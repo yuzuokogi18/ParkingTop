@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,25 +49,25 @@ fun MySpacesScreen(
                     NavigationBarItem(
                         selected = false, onClick = onDashboardClick,
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text("Panel", fontSize = 10.sp) },
+                        label = { Text("Panel", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = false, onClick = onReservationsClick,
                         icon = { Icon(Icons.Default.List, null) },
-                        label = { Text("Reservas", fontSize = 10.sp) },
+                        label = { Text("Reservas", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = false, onClick = onAvailabilityClick,
                         icon = { Icon(Icons.Default.DateRange, null) },
-                        label = { Text("Disponibilidad", fontSize = 10.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Visible) },
+                        label = { Text("Horario", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = true, onClick = { },
                         icon = { Icon(Icons.Default.DirectionsCar, null) },
-                        label = { Text("Mis Espacios", fontSize = 10.sp) },
+                        label = { Text("Espacios", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = BlueSecondary,
                             selectedTextColor = BlueSecondary,
@@ -78,7 +77,7 @@ fun MySpacesScreen(
                     NavigationBarItem(
                         selected = false, onClick = onProfileClick,
                         icon = { Icon(Icons.Default.Person, null) },
-                        label = { Text("Perfil", fontSize = 10.sp) },
+                        label = { Text("Perfil", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                 }
