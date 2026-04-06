@@ -7,6 +7,7 @@ object AppRoutes {
     const val SUBSCRIPTION            = "subscription"
     const val HOME_CLIENT             = "home_client"
     const val HOME_OWNER              = "home_owner"
+    const val MY_SPACES               = "my_spaces"
     const val CREATE_PARKING          = "create_parking"
     const val EDIT_PARKING            = "edit_parking/{parkingId}"
     const val BUSQUEDA                = "busqueda"

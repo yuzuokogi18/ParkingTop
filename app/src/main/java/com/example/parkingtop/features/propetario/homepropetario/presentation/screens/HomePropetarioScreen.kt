@@ -1,5 +1,6 @@
 package com.example.parkingtop.features.propetario.homepropetario.presentation.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,13 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.parkingtop.R
-import com.example.parkingtop.core.di.navigation.AppRoutes
 import com.example.parkingtop.features.propetario.homepropetario.domain.entities.HomePropetarioData
 import com.example.parkingtop.features.propetario.homepropetario.presentation.components.OwnerParkingCard
 import com.example.parkingtop.features.propetario.homepropetario.presentation.viewmodels.HomePropetarioViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
-import androidx.compose.foundation.Image
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +36,7 @@ fun HomePropetarioScreen(
     onParkingClick: (String) -> Unit,
     onEditParkingClick: (String) -> Unit,
     onReservationsClick: () -> Unit,
+    onMySpacesClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onAvailabilityClick: () -> Unit = {},
     viewModel: HomePropetarioViewModel = hiltViewModel()
@@ -91,7 +90,7 @@ fun HomePropetarioScreen(
                             selected = true,
                             onClick = { },
                             icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                            label = { Text("Panel", fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Visible) },
+                            label = { Text("Panel", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Visible) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = BlueSecondary,
                                 selectedTextColor = BlueSecondary,
@@ -104,21 +103,28 @@ fun HomePropetarioScreen(
                             selected = false,
                             onClick = onReservationsClick,
                             icon = { Icon(Icons.Default.List, contentDescription = null) },
-                            label = { Text("Reservas", fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Visible) },
+                            label = { Text("Reservas", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Visible) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                         )
                         NavigationBarItem(
                             selected = false,
                             onClick = onAvailabilityClick,
                             icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
-                            label = { Text("Disponibilidad", fontSize = 11.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Visible) },
+                            label = { Text("Disponibilidad", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Visible) },
+                            colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                        )
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = onMySpacesClick,
+                            icon = { Icon(Icons.Default.DirectionsCar, contentDescription = null) },
+                            label = { Text("Mis Espacios", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Visible) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                         )
                         NavigationBarItem(
                             selected = false,
                             onClick = onProfileClick,
                             icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                            label = { Text("Perfil", fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Visible) },
+                            label = { Text("Perfil", fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Visible) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                         )
                     }

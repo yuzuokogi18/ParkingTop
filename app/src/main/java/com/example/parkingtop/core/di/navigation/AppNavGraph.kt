@@ -28,6 +28,7 @@ import com.example.parkingtop.features.propetario.crearestacionamiento.presentat
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens.UpdateParkingScreen
 import com.example.parkingtop.features.propetario.reservationpropetario.presentation.screens.ReservationOwnerScreen
 import com.example.parkingtop.features.propetario.horariopropetario.presentation.screens.AvailabilityScreen
+import com.example.parkingtop.features.propetario.misespaciospropetario.presentation.screens.MySpacesScreen
 
 @Composable
 fun AppNavigation() {
@@ -95,6 +96,7 @@ fun AppNavigation() {
                 },
                 onReservationsClick = { navController.navigate("owner_reservations") },
                 onAvailabilityClick = { navController.navigate("owner_availability") },
+                onMySpacesClick = { navController.navigate(AppRoutes.MY_SPACES) },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
             )
         }
@@ -184,7 +186,6 @@ fun AppNavigation() {
                     navController.navigate(AppRoutes.updateProfile(name, phone, imageUrl))
                 },
                 onNotificationsClick = { navController.navigate(AppRoutes.NOTIFICATIONS) },
-                // ✅ Configuración para PROPIETARIO desde su perfil
                 onDashboardClick     = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onReservationsClick  = { navController.navigate("owner_reservations") },
                 onAvailabilityClick  = { navController.navigate("owner_availability") },
@@ -263,10 +264,10 @@ fun AppNavigation() {
         }
         
         composable("owner_reservations") {
-            // ✅ Pasamos las acciones de navegación para la barra inferior de reservas
             ReservationOwnerScreen(
                 onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onAvailabilityClick = { navController.navigate("owner_availability") },
+                onMySpacesClick = { navController.navigate(AppRoutes.MY_SPACES) },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
             )
         }
@@ -275,7 +276,18 @@ fun AppNavigation() {
             AvailabilityScreen(
                 onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onReservationsClick = { navController.navigate("owner_reservations") },
+                onMySpacesClick = { navController.navigate(AppRoutes.MY_SPACES) },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
+            )
+        }
+
+        composable(AppRoutes.MY_SPACES) {
+            MySpacesScreen(
+                onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onReservationsClick = { navController.navigate("owner_reservations") },
+                onAvailabilityClick = { navController.navigate("owner_availability") },
+                onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
+                onSpotClick = { /* TODO: Navegar al detalle del espacio */ }
             )
         }
     }

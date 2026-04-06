@@ -1,6 +1,7 @@
 package com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens
 
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -236,8 +237,10 @@ fun CreateParkingScreen(
 
                     val imageFiles = selectedImageUris.mapNotNull { uri ->
                         try {
+                            val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
                             val inputStream = context.contentResolver.openInputStream(uri)
-                            val file = File(context.cacheDir, "parking_img_${System.currentTimeMillis()}.jpg")
+                            val file = File(context.cacheDir, "parking_${System.currentTimeMillis()}.$extension")
                             val outputStream = FileOutputStream(file)
                             inputStream?.use { input -> outputStream.use { output -> input.copyTo(output) } }
                             file
