@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,6 +30,7 @@ import com.example.parkingtop.ui.theme.TextPrimary
 fun AvailabilityScreen(
     onDashboardClick: () -> Unit,
     onReservationsClick: () -> Unit,
+    onMySpacesClick: () -> Unit = {},
     onProfileClick: () -> Unit,
     viewModel: AvailabilityViewModel = hiltViewModel()
 ) {
@@ -55,14 +54,14 @@ fun AvailabilityScreen(
                         selected = false,
                         onClick = onDashboardClick,
                         icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                        label = { Text("Panel", fontSize = 11.sp) },
+                        label = { Text("Panel", fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onReservationsClick,
                         icon = { Icon(Icons.Default.List, contentDescription = null) },
-                        label = { Text("Reservas", fontSize = 11.sp) },
+                        label = { Text("Reservas", fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
@@ -72,7 +71,7 @@ fun AvailabilityScreen(
                         label = { 
                             Text(
                                 "Disponibilidad", 
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 maxLines = 1,
                                 softWrap = false,
                                 overflow = TextOverflow.Visible
@@ -86,9 +85,16 @@ fun AvailabilityScreen(
                     )
                     NavigationBarItem(
                         selected = false,
+                        onClick = onMySpacesClick,
+                        icon = { Icon(Icons.Default.DirectionsCar, contentDescription = null) },
+                        label = { Text("Mis Espacios", fontSize = 10.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                    )
+                    NavigationBarItem(
+                        selected = false,
                         onClick = onProfileClick,
                         icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        label = { Text("Perfil", fontSize = 11.sp) },
+                        label = { Text("Perfil", fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                 }
@@ -149,7 +155,7 @@ fun PublishStatusCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -210,7 +216,7 @@ fun OccupancyExpectedCard(occupancyList: List<OccupancyInfo>) {
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = TextPrimary,
                             modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.End
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End
                         )
                     } else {
                         Text(
@@ -218,7 +224,7 @@ fun OccupancyExpectedCard(occupancyList: List<OccupancyInfo>) {
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = TextPrimary,
                             modifier = Modifier.weight(2f),
-                            textAlign = TextAlign.End
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End
                         )
                     }
                 }

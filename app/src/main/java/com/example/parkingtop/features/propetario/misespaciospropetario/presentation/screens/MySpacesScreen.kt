@@ -1,48 +1,45 @@
-package com.example.parkingtop.features.propetario.reservationpropetario.presentation.screens
+package com.example.parkingtop.features.propetario.misespaciospropetario.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.parkingtop.features.propetario.reservationpropetario.domain.entities.ReservationStatus
-import com.example.parkingtop.features.propetario.reservationpropetario.presentation.components.ReservationOwnerCard
-import com.example.parkingtop.features.propetario.reservationpropetario.presentation.viewmodels.ReservationOwnerViewModel
+import com.example.parkingtop.features.propetario.misespaciospropetario.presentation.components.ParkingSpotCard
+import com.example.parkingtop.features.propetario.misespaciospropetario.presentation.viewmodels.MySpacesViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
+import com.example.parkingtop.ui.theme.TextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReservationOwnerScreen(
+fun MySpacesScreen(
     onDashboardClick: () -> Unit,
+    onReservationsClick: () -> Unit,
     onAvailabilityClick: () -> Unit,
-    onMySpacesClick: () -> Unit = {},
     onProfileClick: () -> Unit,
-    viewModel: ReservationOwnerViewModel = hiltViewModel()
+    onSpotClick: (String) -> Unit,
+    viewModel: MySpacesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state
-    val filters = listOf("Todas", "Pendientes", "Confirmadas", "Canceladas")
+    val filters = listOf("Todos", "Disponibles", "Ocupados", "Reservados", "Mantenimiento")
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Gestionar Reservas", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text("Mis Espacios", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
         },
@@ -57,14 +54,10 @@ fun ReservationOwnerScreen(
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
-                        selected = true, onClick = { },
+                        selected = false, onClick = onReservationsClick,
                         icon = { Icon(Icons.Default.List, null) },
                         label = { Text("Reservas", fontSize = 10.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BlueSecondary,
-                            selectedTextColor = BlueSecondary,
-                            indicatorColor = Color.Transparent
-                        )
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = false, onClick = onAvailabilityClick,
@@ -73,10 +66,14 @@ fun ReservationOwnerScreen(
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
-                        selected = false, onClick = onMySpacesClick,
+                        selected = true, onClick = { },
                         icon = { Icon(Icons.Default.DirectionsCar, null) },
                         label = { Text("Mis Espacios", fontSize = 10.sp) },
-                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueSecondary,
+                            selectedTextColor = BlueSecondary,
+                            indicatorColor = Color.Transparent
+                        )
                     )
                     NavigationBarItem(
                         selected = false, onClick = onProfileClick,
@@ -94,6 +91,7 @@ fun ReservationOwnerScreen(
                 .padding(padding)
                 .background(Color(0xFFFDFDFD))
         ) {
+            // Filtros
             LazyRow(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -101,7 +99,7 @@ fun ReservationOwnerScreen(
                 items(filters) { filter ->
                     FilterChip(
                         selected = state.selectedFilter == filter,
-                        onClick = { viewModel.loadReservations(filter) },
+                        onClick = { viewModel.onFilterSelected(filter) },
                         label = { Text(filter) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = BlueSecondary,
@@ -109,34 +107,48 @@ fun ReservationOwnerScreen(
                             containerColor = Color(0xFFF1F3F4)
                         ),
                         border = null,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(20.dp)
                     )
                 }
             }
+
+            // Barra de búsqueda
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Buscar espacio...", color = Color.Gray) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = BlueSecondary,
+                    unfocusedBorderColor = Color(0xFFEEEEEE),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
+            )
 
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = BlueSecondary)
                 }
-            } else if (state.reservations.isEmpty()) {
+            } else if (state.error != null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-                        Box(modifier = Modifier.size(80.dp).clip(CircleShape).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.EventBusy, null, modifier = Modifier.size(40.dp), tint = BlueSecondary)
-                        }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(text = "Aún no tienes ninguna reservación de tus estacionamientos", textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium, color = Color.Gray))
-                    }
+                    Text(text = state.error!!, color = Color.Red, modifier = Modifier.padding(16.dp))
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(state.reservations) { reservation ->
-                        ReservationOwnerCard(
-                            reservation = reservation,
-                            onAccept = { viewModel.updateStatus(reservation.id, ReservationStatus.CONFIRMED) },
-                            onDecline = { viewModel.updateStatus(reservation.id, ReservationStatus.CANCELLED) },
-                            onComplete = { viewModel.updateStatus(reservation.id, ReservationStatus.COMPLETED) },
-                            onViewDetails = { /* TODO */ }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(state.filteredSpots) { spot ->
+                        ParkingSpotCard(
+                            spot = spot,
+                            onClick = { onSpotClick(spot.id) }
                         )
                     }
                     item { Spacer(modifier = Modifier.height(80.dp)) }

@@ -21,6 +21,7 @@ import com.example.parkingtop.features.propetario.horariopropetario.data.datasou
 import com.example.parkingtop.features.propetario.reservationpropetario.data.datasources.models.ReservationOwnerDto
 import com.example.parkingtop.features.register.data.datasources.models.AuthResponseDTO
 import com.example.parkingtop.features.register.data.datasources.models.RegisterRequest
+import com.example.parkingtop.features.propetario.misespaciospropetario.data.datasources.models.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -156,8 +157,53 @@ interface ParkingApi {
     @POST("v1/parkings")
     suspend fun createParking(@Header("Authorization") token: String, @Body request: CreateParkingDto): Response<ApiResponse<Unit>>
 
+    @Multipart
+    @POST("v1/parkings")
+    suspend fun createParkingWithImages(
+        @Header("Authorization") token: String,
+        @Part("name") name: RequestBody?,
+        @Part("description") description: RequestBody?,
+        @Part("address") address: RequestBody?,
+        @Part("city") city: RequestBody?,
+        @Part("state") state: RequestBody?,
+        @Part("postalCode") postalCode: RequestBody?,
+        @Part("latitude") latitude: RequestBody?,
+        @Part("longitude") longitude: RequestBody?,
+        @Part("totalSpots") totalSpots: RequestBody?,
+        @Part("basePricePerHour") basePricePerHour: RequestBody?,
+        @Part("overtimeRatePerHour") overtimeRatePerHour: RequestBody?,
+        @Part("features") features: RequestBody?,
+        @Part("operatingHours") operatingHours: RequestBody?,
+        @Part images: List<MultipartBody.Part>?
+    ): Response<ApiResponse<Unit>>
+
     @PUT("v1/parkings/{id}")
-    suspend fun updateParking(@Header("Authorization") token: String, @Path("id") id: String, @Body request: CreateParkingDto): Response<ApiResponse<Unit>>
+    suspend fun updateParking(
+        @Header("Authorization") token: String,
+        @Path("id") id: String,
+        @Body request: CreateParkingDto
+    ): Response<ApiResponse<Unit>>
+
+    @Multipart
+    @PUT("v1/parkings/{id}")
+    suspend fun updateParkingWithImages(
+        @Header("Authorization") token: String,
+        @Path("id") id: String,
+        @Part("name") name: RequestBody?,
+        @Part("description") description: RequestBody?,
+        @Part("address") address: RequestBody?,
+        @Part("city") city: RequestBody?,
+        @Part("state") state: RequestBody?,
+        @Part("postalCode") postalCode: RequestBody?,
+        @Part("latitude") latitude: RequestBody?,
+        @Part("longitude") longitude: RequestBody?,
+        @Part("totalSpots") totalSpots: RequestBody?,
+        @Part("basePricePerHour") basePricePerHour: RequestBody?,
+        @Part("overtimeRatePerHour") overtimeRatePerHour: RequestBody?,
+        @Part("features") features: RequestBody?,
+        @Part("operatingHours") operatingHours: RequestBody?,
+        @Part images: List<MultipartBody.Part>?
+    ): Response<ApiResponse<Unit>>
 
     @DELETE("v1/parkings/{id}")
     suspend fun deleteParking(@Header("Authorization") token: String, @Path("id") id: String): Response<ApiResponse<Unit>>
@@ -176,4 +222,38 @@ interface ParkingApi {
 
     @PATCH("v1/owner/availability/publish")
     suspend fun updatePublishStatus(@Header("Authorization") token: String, @Body status: Map<String, Boolean>): Response<ApiResponse<Unit>>
+
+    // ═══════════════════════════════════════
+    // PARKING SPOTS ENDPOINTS
+    // ═══════════════════════════════════════
+    @GET("v1/parking-spots/parking-lot/{parkingLotId}")
+    suspend fun getByParkingLotId(
+        @Header("Authorization") bearerToken: String,
+        @Path("parkingLotId") parkingLotId: String
+    ): Response<ApiResponse<List<ParkingSpotDto>>>
+
+    @GET("v1/parking-spots/{id}")
+    suspend fun getParkingSpotById(
+        @Header("Authorization") bearerToken: String,
+        @Path("id") id: String
+    ): Response<ApiResponse<ParkingSpotDto>>
+
+    @POST("v1/parking-spots")
+    suspend fun createParkingSpot(
+        @Header("Authorization") bearerToken: String,
+        @Body body: CreateParkingSpotRequest
+    ): Response<ApiResponse<ParkingSpotDto>>
+
+    @PUT("v1/parking-spots/{id}")
+    suspend fun updateParkingSpot(
+        @Header("Authorization") bearerToken: String,
+        @Path("id") id: String,
+        @Body body: UpdateParkingSpotRequest
+    ): Response<ApiResponse<ParkingSpotDto>>
+
+    @DELETE("v1/parking-spots/{id}")
+    suspend fun deleteParkingSpot(
+        @Header("Authorization") bearerToken: String,
+        @Path("id") id: String
+    ): Response<ApiResponse<DeleteMessageDto>>
 }
