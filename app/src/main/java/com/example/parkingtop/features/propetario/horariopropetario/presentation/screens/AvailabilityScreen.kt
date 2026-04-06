@@ -54,29 +54,21 @@ fun AvailabilityScreen(
                         selected = false,
                         onClick = onDashboardClick,
                         icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                        label = { Text("Panel", fontSize = 10.sp) },
+                        label = { Text("Panel", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onReservationsClick,
                         icon = { Icon(Icons.Default.List, contentDescription = null) },
-                        label = { Text("Reservas", fontSize = 10.sp) },
+                        label = { Text("Reservas", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = true,
                         onClick = { },
                         icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
-                        label = { 
-                            Text(
-                                "Disponibilidad", 
-                                fontSize = 10.sp,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Visible
-                            ) 
-                        },
+                        label = { Text("Horario", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = BlueSecondary,
                             selectedTextColor = BlueSecondary,
@@ -87,14 +79,14 @@ fun AvailabilityScreen(
                         selected = false,
                         onClick = onMySpacesClick,
                         icon = { Icon(Icons.Default.DirectionsCar, contentDescription = null) },
-                        label = { Text("Mis Espacios", fontSize = 10.sp) },
+                        label = { Text("Espacios", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
                         selected = false,
                         onClick = onProfileClick,
                         icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        label = { Text("Perfil", fontSize = 10.sp) },
+                        label = { Text("Perfil", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                 }

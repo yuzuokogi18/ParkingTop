@@ -6,13 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -32,37 +32,42 @@ fun ParkingSpotCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp), spotColor = Color.Black.copy(alpha = 0.1f))
+            .clip(RoundedCornerShape(20.dp))
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Lugar #${spot.spotNumber}",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp
+                        ),
                         color = TextPrimary
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = null,
-                            tint = Color.Gray,
+                            tint = Color.Gray.copy(alpha = 0.6f),
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "${spot.floor ?: "Piso 1"} • ${spot.section ?: "Sección A"}",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = Color.Gray
                         )
                     }
@@ -71,6 +76,7 @@ fun ParkingSpotCard(
                 StatusBadge(statusConfig)
             }
 
+            // Indicador de estado con punto y descripción
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -79,42 +85,54 @@ fun ParkingSpotCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(10.dp)
                             .clip(CircleShape)
                             .background(statusConfig.color)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = statusConfig.description,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                         color = TextPrimary
                     )
                 }
 
                 if (spot.status == SpotStatus.OCCUPIED || spot.status == SpotStatus.RESERVED) {
+                    val label = if (spot.status == SpotStatus.OCCUPIED) "En uso" else "15 min"
                     Text(
-                        text = if (spot.status == SpotStatus.OCCUPIED) "En uso" else "Reservado",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = statusConfig.color,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(statusConfig.color.copy(alpha = 0.1f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(statusConfig.color.copy(alpha = 0.12f))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
             }
 
+            // Barra de progreso con degradado naranja (solo si está ocupado o reservado)
             if (spot.status == SpotStatus.OCCUPIED || spot.status == SpotStatus.RESERVED) {
-                // Barra de progreso horizontal (naranja degradado simulado)
-                LinearProgressIndicator(
-                    progress = { 0.65f },
+                val progress = 0.7f // Simulado
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = Color(0xFFFF9800),
-                    trackColor = Color(0xFFF1F3F4),
-                )
+                        .height(8.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF1F3F4))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .fillMaxHeight()
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(Color(0xFFFFB74D), Color(0xFFFF9800))
+                                )
+                            )
+                    )
+                }
             }
         }
     }
@@ -124,25 +142,17 @@ fun ParkingSpotCard(
 fun StatusBadge(config: StatusConfig) {
     Surface(
         color = config.color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(config.color)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = config.label,
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                color = config.color
-            )
-        }
+        Text(
+            text = config.label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp
+            ),
+            color = config.color,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
     }
 }
 
@@ -154,10 +164,10 @@ data class StatusConfig(
 
 private fun getStatusConfig(status: SpotStatus): StatusConfig {
     return when (status) {
-        SpotStatus.AVAILABLE -> StatusConfig("Disponible", "Libre ahora", Color(0xFF4CAF50))
-        SpotStatus.OCCUPIED -> StatusConfig("Ocupado", "En uso", Color(0xFFF44336))
-        SpotStatus.RESERVED -> StatusConfig("Reservado", "Reservado", Color(0xFFFFC107))
-        SpotStatus.MAINTENANCE -> StatusConfig("Mantenimiento", "No disponible", Color(0xFF9E9E9E))
+        SpotStatus.AVAILABLE -> StatusConfig("Disponible", "Libre ahora", Color(0xFF34C759)) // Verde iOS
+        SpotStatus.OCCUPIED -> StatusConfig("Ocupado", "En uso", Color(0xFFFF3B30))    // Rojo iOS
+        SpotStatus.RESERVED -> StatusConfig("Reservado", "Reservado", Color(0xFFFFCC00)) // Amarillo iOS
+        SpotStatus.MAINTENANCE -> StatusConfig("Mantenimiento", "No disponible", Color(0xFF8E8E93)) // Gris iOS
         else -> StatusConfig("Desconocido", "Estado desconocido", Color.LightGray)
     }
 }

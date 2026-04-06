@@ -186,9 +186,11 @@ fun AppNavigation() {
                     navController.navigate(AppRoutes.updateProfile(name, phone, imageUrl))
                 },
                 onNotificationsClick = { navController.navigate(AppRoutes.NOTIFICATIONS) },
+                // ✅ Configuración para PROPIETARIO desde su perfil
                 onDashboardClick     = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onReservationsClick  = { navController.navigate("owner_reservations") },
                 onAvailabilityClick  = { navController.navigate("owner_availability") },
+                onMySpacesClick      = { navController.navigate(AppRoutes.MY_SPACES) },
                 viewModel            = profileViewModel
             )
         }

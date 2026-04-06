@@ -1,5 +1,7 @@
 package com.example.parkingtop.features.propetario.crearestacionamiento.presentation.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.*
@@ -27,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.parkingtop.features.propetario.crearestacionamiento.domain.entities.DayHours
@@ -37,25 +41,29 @@ import com.example.parkingtop.features.propetario.crearestacionamiento.presentat
 import com.example.parkingtop.features.propetario.crearestacionamiento.presentation.viewmodels.CreateParkingViewModel
 import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
+import com.google.android.gms.location.LocationServices
 import java.io.File
 import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateParkingScreen(
+    isFirst: Boolean = false,
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
     viewModel: CreateParkingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
     var stateStr by remember { mutableStateOf("") }
     var postalCode by remember { mutableStateOf("") }
-    var latitude by remember { mutableStateOf("16.7516") }
-    var longitude by remember { mutableStateOf("-93.1029") }
+    var latitude by remember { mutableStateOf("") }
+    var longitude by remember { mutableStateOf("") }
     
     var basePrice by remember { mutableStateOf("15.00") }
     var overtimeRate by remember { mutableStateOf("20.00") }
@@ -65,12 +73,34 @@ fun CreateParkingScreen(
     var hasCctv by remember { mutableStateOf(true) }
     var hasSecurity by remember { mutableStateOf(false) }
 
+    var showSuccessDialog by remember { mutableStateOf(false) }
+
     val days = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
     val dayChecks = remember { mutableStateListOf(true, true, true, true, true, false, false) }
     val openTimes = remember { mutableStateListOf("08:00", "08:00", "08:00", "08:00", "08:00", "09:00", "10:00") }
     val closeTimes = remember { mutableStateListOf("20:00", "20:00", "20:00", "20:00", "22:00", "23:00", "18:00") }
 
     var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    fun fetchLocation() {
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    latitude = it.latitude.toString()
+                    longitude = it.longitude.toString()
+                }
+            }
+        } catch (e: SecurityException) { }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                fetchLocation()
+            }
+        }
+    )
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5),
@@ -80,7 +110,35 @@ fun CreateParkingScreen(
     val state by viewModel.state
 
     LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) onSuccess()
+        if (state.isSuccess) {
+            showSuccessDialog = true
+        }
+    }
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("¡Éxito!", fontWeight = FontWeight.Bold) },
+            text = { 
+                Text(
+                    if (isFirst) "¡Felicidades! Ya tienes tu primer establecimiento creado." 
+                    else "Establecimiento creado correctamente."
+                ) 
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        onSuccess()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BlueSecondary)
+                ) {
+                    Text("Aceptar", color = Color.White)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     Scaffold(
@@ -120,9 +178,29 @@ fun CreateParkingScreen(
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                     FormTextField(modifier = Modifier.weight(1f), label = "Latitud", value = latitude, onValueChange = { latitude = it }, placeholder = "16.7516")
                     FormTextField(modifier = Modifier.weight(1f), label = "Longitud", value = longitude, onValueChange = { longitude = it }, placeholder = "-93.1029")
+                    
+                    Surface(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                val permission = Manifest.permission.ACCESS_FINE_LOCATION
+                                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+                                    fetchLocation()
+                                } else {
+                                    permissionLauncher.launch(permission)
+                                }
+                            },
+                        color = BlueSecondary,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, tint = Color.White)
+                        }
+                    }
                 }
             }
 
