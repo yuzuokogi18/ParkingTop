@@ -1,5 +1,6 @@
 package com.example.parkingtop.features.cliente.Perfil.presentation.domain.repositories
 
+import com.example.parkingtop.core.network.model.OwnerBalanceDto
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.Reservation
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.User
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.Vehicle
@@ -21,9 +22,6 @@ interface ProfileRepository {
     ): Result<User>
 
     /**
-     * Sube una imagen de perfil
-     */
-    /**
      * Obtiene los vehículos registrados del usuario
      */
     suspend fun getVehicles(): Result<List<Vehicle>>
@@ -42,4 +40,9 @@ interface ProfileRepository {
     suspend fun logout(): Result<Unit>
 
     suspend fun deleteVehicle(vehicleId: String): Result<Unit>
+
+    /**
+     * Obtiene el balance del propietario
+     */
+    suspend fun getOwnerBalance(): Result<OwnerBalanceDto>
 }

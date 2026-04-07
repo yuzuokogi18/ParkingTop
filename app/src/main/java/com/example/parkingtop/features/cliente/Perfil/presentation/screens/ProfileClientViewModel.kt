@@ -3,6 +3,7 @@ package com.example.parkingtop.features.cliente.Perfil.presentation.screens
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.parkingtop.core.network.model.OwnerBalanceDto
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.Reservation
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.User
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.entities.Vehicle
@@ -12,6 +13,7 @@ import com.example.parkingtop.features.cliente.Perfil.presentation.domain.usecas
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.usecases.GetVehiclesUseCase
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.usecases.LogoutUseCase
 import com.example.parkingtop.features.cliente.Perfil.presentation.domain.usecases.UpdateProfileUseCase
+import com.example.parkingtop.features.cliente.Perfil.presentation.domain.repositories.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,6 +24,7 @@ data class ProfileState(
     val vehicles: List<Vehicle> = emptyList(),
     val activeReservations: List<Reservation> = emptyList(),
     val reservationHistory: List<Reservation> = emptyList(),
+    val balance: OwnerBalanceDto? = null,
     val error: String? = null,
     val isUploadingImage: Boolean = false,
     val isUpdatingProfile: Boolean = false,
@@ -36,7 +39,8 @@ class ProfileViewModel @Inject constructor(
     private val getVehiclesUseCase:     GetVehiclesUseCase,
     private val getReservationsUseCase: GetReservationsUseCase,
     private val logoutUseCase:          LogoutUseCase,
-    private val deleteVehicleUseCase:   DeleteVehicleUseCase
+    private val deleteVehicleUseCase:   DeleteVehicleUseCase,
+    private val profileRepository:      ProfileRepository
 ) : ViewModel() {
 
     private val _state = mutableStateOf(ProfileState())
@@ -46,7 +50,6 @@ class ProfileViewModel @Inject constructor(
         loadProfileData()
     }
 
-    // ✅ cambiado de private a fun pública para que AppNavigation pueda llamarlo
     fun loadProfileData() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
@@ -54,6 +57,10 @@ class ProfileViewModel @Inject constructor(
             getProfileUseCase().fold(
                 onSuccess = { user ->
                     _state.value = _state.value.copy(user = user)
+                    // Si es owner, cargar balance
+                    if (user.role == "owner") {
+                        loadOwnerBalance()
+                    }
                 },
                 onFailure = { error ->
                     _state.value = _state.value.copy(
@@ -92,6 +99,16 @@ class ProfileViewModel @Inject constructor(
             )
 
             _state.value = _state.value.copy(isLoading = false)
+        }
+    }
+
+    private fun loadOwnerBalance() {
+        viewModelScope.launch {
+            profileRepository.getOwnerBalance().onSuccess { balance ->
+                _state.value = _state.value.copy(balance = balance)
+            }.onFailure { 
+                // Silently fail or handle error
+            }
         }
     }
 

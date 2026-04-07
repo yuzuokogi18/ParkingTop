@@ -1,8 +1,13 @@
 package com.example.parkingtop.core.di.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -191,6 +196,8 @@ fun AppNavigation() {
                 onReservationsClick  = { navController.navigate("owner_reservations") },
                 onAvailabilityClick  = { navController.navigate("owner_availability") },
                 onMySpacesClick      = { navController.navigate(AppRoutes.MY_SPACES) },
+                onTransferClick      = { navController.navigate(AppRoutes.REQUEST_PAYOUT) },
+                onPayoutHistoryClick = { navController.navigate(AppRoutes.PAYOUT_HISTORY) },
                 viewModel            = profileViewModel
             )
         }
@@ -291,6 +298,20 @@ fun AppNavigation() {
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
                 onSpotClick = { /* TODO: Navegar al detalle del espacio */ }
             )
+        }
+        
+        composable(AppRoutes.PAYOUT_HISTORY) {
+            // TODO: Implementar pantalla de historial de pagos
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Historial de Ganancias (Próximamente)")
+            }
+        }
+        
+        composable(AppRoutes.REQUEST_PAYOUT) {
+            // TODO: Implementar pantalla de solicitud de retiro
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Transferir a mi Cuenta (Próximamente)")
+            }
         }
     }
 }

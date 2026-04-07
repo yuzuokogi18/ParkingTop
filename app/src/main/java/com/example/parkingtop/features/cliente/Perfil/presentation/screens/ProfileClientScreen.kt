@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.parkingtop.features.cliente.Perfil.presentation.components.OwnerBalanceCard
 import com.example.parkingtop.features.cliente.Perfil.presentation.components.ProfileHeaderCard
 import com.example.parkingtop.features.cliente.Perfil.presentation.components.ReservationProfileCard
 import com.example.parkingtop.features.cliente.Perfil.presentation.components.VehicleCard
@@ -39,6 +40,8 @@ fun ProfileClientScreen(
     onReservationsClick: () -> Unit = {},
     onAvailabilityClick: () -> Unit = {},
     onMySpacesClick: () -> Unit = {},
+    onTransferClick: () -> Unit = {},
+    onPayoutHistoryClick: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state = viewModel.state.value
@@ -127,7 +130,7 @@ fun ProfileClientScreen(
             }
         }
     ) { innerPadding ->
-        if (state.isLoading) {
+        if (state.isLoading && state.user == null) {
             Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = BlueSecondary)
             }
@@ -194,8 +197,17 @@ fun ProfileClientScreen(
                         )
                     }
                 } else {
-                    // Contenido específico para PROPIETARIO en su perfil
-                    Spacer(modifier = Modifier.height(32.dp))
+                    // ✅ Contenido específico para PROPIETARIO: Resumen de Cuenta
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    OwnerBalanceCard(
+                        balance = state.balance?.availableBalance ?: "0.00",
+                        onTransferClick = onTransferClick,
+                        onHistoryClick = onPayoutHistoryClick
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),

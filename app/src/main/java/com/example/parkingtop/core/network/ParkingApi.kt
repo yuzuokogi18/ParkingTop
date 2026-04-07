@@ -22,6 +22,7 @@ import com.example.parkingtop.features.propetario.reservationpropetario.data.dat
 import com.example.parkingtop.features.register.data.datasources.models.AuthResponseDTO
 import com.example.parkingtop.features.register.data.datasources.models.RegisterRequest
 import com.example.parkingtop.features.propetario.misespaciospropetario.data.datasources.models.*
+import com.example.parkingtop.core.network.model.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -167,11 +168,11 @@ interface ParkingApi {
         @Part("city") city: RequestBody?,
         @Part("state") state: RequestBody?,
         @Part("postalCode") postalCode: RequestBody?,
-        @Part("latitude") latitude: RequestBody?,
-        @Part("longitude") longitude: RequestBody?,
-        @Part("totalSpots") totalSpots: RequestBody?,
-        @Part("basePricePerHour") basePricePerHour: RequestBody?,
-        @Part("overtimeRatePerHour") overtimeRatePerHour: RequestBody?,
+        @Part("latitude") latitude: Double?,
+        @Part("longitude") longitude: Double?,
+        @Part("totalSpots") totalSpots: Int?,
+        @Part("basePricePerHour") basePricePerHour: Double?,
+        @Part("overtimeRatePerHour") overtimeRatePerHour: Double?,
         @Part("features") features: RequestBody?,
         @Part("operatingHours") operatingHours: RequestBody?,
         @Part images: List<MultipartBody.Part>?
@@ -195,11 +196,11 @@ interface ParkingApi {
         @Part("city") city: RequestBody?,
         @Part("state") state: RequestBody?,
         @Part("postalCode") postalCode: RequestBody?,
-        @Part("latitude") latitude: RequestBody?,
-        @Part("longitude") longitude: RequestBody?,
-        @Part("totalSpots") totalSpots: RequestBody?,
-        @Part("basePricePerHour") basePricePerHour: RequestBody?,
-        @Part("overtimeRatePerHour") overtimeRatePerHour: RequestBody?,
+        @Part("latitude") latitude: Double?,
+        @Part("longitude") longitude: Double?,
+        @Part("totalSpots") totalSpots: Int?,
+        @Part("basePricePerHour") basePricePerHour: Double?,
+        @Part("overtimeRatePerHour") overtimeRatePerHour: Double?,
         @Part("features") features: RequestBody?,
         @Part("operatingHours") operatingHours: RequestBody?,
         @Part images: List<MultipartBody.Part>?
@@ -256,4 +257,23 @@ interface ParkingApi {
         @Header("Authorization") bearerToken: String,
         @Path("id") id: String
     ): Response<ApiResponse<DeleteMessageDto>>
+
+    // ═══════════════════════════════════════
+    // PAYOUTS ENDPOINTS
+    // ═══════════════════════════════════════
+    @GET("v1/payouts/balance")
+    suspend fun getBalance(@Header("Authorization") token: String): Response<ApiResponse<OwnerBalanceDto>>
+
+    @POST("v1/payouts/request")
+    suspend fun requestPayout(
+        @Header("Authorization") token: String,
+        @Body body: RequestPayoutBody
+    ): Response<ApiResponse<PayoutDto>>
+
+    @GET("v1/payouts/history")
+    suspend fun getPayoutHistory(
+        @Header("Authorization") token: String,
+        @Query("page") page: Int = 1,
+        @Query("perPage") perPage: Int = 20
+    ): Response<ApiResponse<PayoutListData>>
 }
