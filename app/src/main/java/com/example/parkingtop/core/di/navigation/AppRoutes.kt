@@ -18,6 +18,10 @@ object AppRoutes {
     const val EDIT_VEHICLE            = "edit_vehicle/{vehicleId}/{licensePlate}/{brand}/{model}/{color}/{isDefault}"
     const val UPDATE_PROFILE          = "update_profile/{name}/{phone}/{imageUrl}"
     const val NOTIFICATIONS           = "notifications"
+    
+    // Payouts / Owner balance
+    const val PAYOUT_HISTORY          = "payout_history"
+    const val REQUEST_PAYOUT          = "request_payout"
 
     fun createParking(isFirst: Boolean = false) = "create_parking?isFirst=$isFirst"
 
