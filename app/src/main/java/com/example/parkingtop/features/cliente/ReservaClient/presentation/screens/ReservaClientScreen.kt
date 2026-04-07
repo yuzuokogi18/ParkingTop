@@ -4,11 +4,13 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -17,11 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.ConfirmReservationButton
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.DateSelector
+import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.PaymentMethodBottomSheet
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.PaymentMethodSelector
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.PriceSummaryCard
+import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.SpotBottomSheet
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.TimeSelector
+import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.VehicleBottomSheet
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.components.VehicleSelector
 import com.example.parkingtop.features.cliente.ReservaClient.presentation.viewmodels.ReservationViewModel
+import com.example.parkingtop.ui.theme.BlueSecondary
 import com.example.parkingtop.ui.theme.TextPrimary
 import java.time.LocalDate
 import java.time.LocalTime
@@ -31,23 +37,53 @@ import java.time.LocalTime
 fun ReservationScreen(
     onBack: () -> Unit = {},
     onPaymentSuccess: (String) -> Unit = {},
+    onCashReservation: () -> Unit = {},
     viewModel: ReservationViewModel = hiltViewModel()
 ) {
-    val state = viewModel.state.value
+    val state   = viewModel.state.value
     val context = LocalContext.current
 
-    // Diálogos de fecha y hora
-    var showEntryDatePicker by remember { mutableStateOf(false) }
-    var showEntryTimePicker by remember { mutableStateOf(false) }
-    var showExitDatePicker by remember { mutableStateOf(false) }
-    var showExitTimePicker by remember { mutableStateOf(false) }
+    var showEntryDatePicker    by remember { mutableStateOf(false) }
+    var showEntryTimePicker    by remember { mutableStateOf(false) }
+    var showExitDatePicker     by remember { mutableStateOf(false) }
+    var showExitTimePicker     by remember { mutableStateOf(false) }
+    var showVehicleSheet       by remember { mutableStateOf(false) }
+    var showSpotSheet          by remember { mutableStateOf(false) }
+    var showPaymentMethodSheet by remember { mutableStateOf(false) }
 
-    // Manejar éxito de reserva
     LaunchedEffect(state.reservationSuccess) {
         if (state.reservationSuccess) {
-            state.paymentUrl?.let { onPaymentSuccess(it) }
+            val result = state.reservationResult
+            if (result != null) {
+                if (result.isCash) onCashReservation()
+                else result.paymentUrl?.let { onPaymentSuccess(it) }
+            }
             viewModel.resetSuccess()
         }
+    }
+
+    if (showVehicleSheet) {
+        VehicleBottomSheet(
+            vehicles          = state.vehicles,
+            selectedVehicle   = state.selectedVehicle,
+            onVehicleSelected = { viewModel.selectVehicle(it) },
+            onDismiss         = { showVehicleSheet = false }
+        )
+    }
+    if (showSpotSheet) {
+        SpotBottomSheet(
+            spots          = state.spots,
+            selectedSpot   = state.selectedSpot,
+            onSpotSelected = { viewModel.selectSpot(it) },
+            onDismiss      = { showSpotSheet = false }
+        )
+    }
+    if (showPaymentMethodSheet) {
+        PaymentMethodBottomSheet(
+            selectedMethod   = state.selectedPaymentMethod,
+            onMethodSelected = { viewModel.selectPaymentMethod(it) },
+            onDismiss        = { showPaymentMethodSheet = false }
+        )
     }
 
     Scaffold(
@@ -57,44 +93,28 @@ fun ReservationScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Reservar Estacionamiento",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
+                            "Reservar Estacionamiento",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = TextPrimary
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
-                                tint = TextPrimary
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = TextPrimary)
                         }
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White
-                    )
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
                 )
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = Color(0xFFEEEEEE)
-                )
+                HorizontalDivider(thickness = 1.dp, color = Color(0xFFEEEEEE))
             }
         }
     ) { innerPadding ->
 
         if (state.isLoading && state.parkingLot == null) {
-            // Loading inicial
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+                modifier         = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
         } else {
             Column(
                 modifier = Modifier
@@ -105,98 +125,148 @@ fun ReservationScreen(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Selector de vehículo
-                state.selectedVehicle?.let { vehicle ->
+                // ── Vehículo ──────────────────────────────────────────────────
+                if (state.isLoadingVehicles) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cargando vehículos...", color = Color.Gray)
+                    }
+                } else {
                     VehicleSelector(
-                        selectedVehicle = "${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})",
-                        vehicleModel = vehicle.model,
-                        vehiclePlate = vehicle.licensePlate,
-                        onVehicleClick = { /* TODO: Mostrar bottom sheet de vehículos */ }
+                        selectedVehicle = state.selectedVehicle?.let {
+                            "${it.brand} ${it.model} (${it.licensePlate})"
+                        } ?: "Selecciona un vehículo",
+                        vehicleModel   = state.selectedVehicle?.model ?: "",
+                        vehiclePlate   = state.selectedVehicle?.licensePlate ?: "",
+                        onVehicleClick = { showVehicleSheet = true }
                     )
+                }
+
+                // ── Espacio (si el estacionamiento tiene spots) ───────────────
+                if (state.spots.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        onClick  = { showSpotSheet = true },
+                        color    = Color(0xFFF5F5F5),
+                        shape    = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier              = Modifier.padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    "Espacio",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.Gray
+                                )
+                                Text(
+                                    text  = state.selectedSpot?.let { "Espacio ${it.spotNumber}" }
+                                        ?: "Sin preferencia (automático)",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = TextPrimary
+                                )
+                            }
+                            Text(
+                                "${state.spots.count { it.isAvailable }} disponibles",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = BlueSecondary
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Fecha y hora de entrada/salida
+                // ── Fechas y horas — named params para evitar ambigüedad ───────
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Entrada
                     Column(modifier = Modifier.weight(1f)) {
                         DateSelector(
-                            label = "Fecha y Hora de Entrada",
-                            date = viewModel.getFormattedEntryDate(),
+                            label       = "Entrada",
+                            date        = viewModel.getFormattedEntryDate(),
                             onDateClick = { showEntryDatePicker = true }
                         )
-
                         Spacer(modifier = Modifier.height(8.dp))
-
                         TimeSelector(
-                            time = viewModel.getFormattedEntryTime(),
+                            time        = viewModel.getFormattedEntryTime(),
                             onTimeClick = { showEntryTimePicker = true }
                         )
                     }
-
-                    // Salida
                     Column(modifier = Modifier.weight(1f)) {
                         DateSelector(
-                            label = "Fecha y Hora de Salida",
-                            date = viewModel.getFormattedExitDate(),
+                            label       = "Salida",
+                            date        = viewModel.getFormattedExitDate(),
                             onDateClick = { showExitDatePicker = true }
                         )
-
                         Spacer(modifier = Modifier.height(8.dp))
-
                         TimeSelector(
-                            time = viewModel.getFormattedExitTime(),
+                            time        = viewModel.getFormattedExitTime(),
                             onTimeClick = { showExitTimePicker = true }
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // Resumen de precios
                 PriceSummaryCard(
-                    hours = state.hours,
-                    baseCost = state.baseCost,
+                    hours          = state.hours,
+                    baseCost       = state.baseCost,
                     additionalTime = state.additionalTime,
-                    discounts = state.discounts,
-                    total = state.total
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Método de pago
-                PaymentMethodSelector(
-                    selectedMethod = state.selectedPaymentMethod,
-                    onMethodClick = { /* TODO: Mostrar opciones de pago */ }
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Botón de confirmar
-                ConfirmReservationButton(
-                    isLoading = state.isLoading,
-                    enabled = state.total > 0 && state.selectedVehicle != null,
-                    onClick = { viewModel.confirmReservation() }
+                    discounts      = state.discounts,
+                    total          = state.total
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
 
-        // Snackbar de error
-        state.error?.let { error ->
-            LaunchedEffect(error) {
-                // Mostrar snackbar o dialog
-                viewModel.resetError()
+                // ── Método de pago ────────────────────────────────────────────
+                PaymentMethodSelector(
+                    selectedMethod = if (state.selectedPaymentMethod == "cash") "Efectivo"
+                    else "MercadoPago",
+                    onMethodClick  = { showPaymentMethodSheet = true }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // ── Error ─────────────────────────────────────────────────────
+                state.error?.let { error ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text     = error,
+                            color    = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(12.dp),
+                            style    = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
+                ConfirmReservationButton(
+                    isLoading = state.isLoading,
+                    enabled   = state.total > 0 && state.selectedVehicle != null,
+                    onClick   = { viewModel.confirmReservation() }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 
-    // Date Pickers
+    // ── Date / Time pickers ───────────────────────────────────────────────────
     if (showEntryDatePicker) {
         DatePickerDialog(
             context,
@@ -207,10 +277,7 @@ fun ReservationScreen(
             state.entryDate.year,
             state.entryDate.monthValue - 1,
             state.entryDate.dayOfMonth
-        ).apply {
-            datePicker.minDate = System.currentTimeMillis()
-            show()
-        }
+        ).apply { datePicker.minDate = System.currentTimeMillis(); show() }
     }
 
     if (showExitDatePicker) {
@@ -223,13 +290,9 @@ fun ReservationScreen(
             state.exitDate.year,
             state.exitDate.monthValue - 1,
             state.exitDate.dayOfMonth
-        ).apply {
-            datePicker.minDate = state.entryDate.toEpochDay() * 24 * 60 * 60 * 1000
-            show()
-        }
+        ).apply { datePicker.minDate = state.entryDate.toEpochDay() * 86400000L; show() }
     }
 
-    // Time Pickers
     if (showEntryTimePicker) {
         TimePickerDialog(
             context,

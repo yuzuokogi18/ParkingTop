@@ -148,13 +148,22 @@ fun AppNavigation() {
                 parkingId      = parkingId,
                 isOwner        = isOwner,
                 onBackClick    = { navController.popBackStack() },
-                onReserveClick = { navController.navigate(AppRoutes.RESERVA) }
+                onReserveClick = { navController.navigate(AppRoutes.reservaClient(parkingId)) }
             )
         }
 
-        composable(AppRoutes.RESERVA) {
-            ReservationScreen(onBack = { navController.popBackStack() })
+
+        composable(
+            route = AppRoutes.RESERVA_CLIENT,
+            arguments = listOf(navArgument("parkingIdClient") { type = NavType.StringType })
+        ) { backStackEntry ->
+            ReservationScreen(
+                onBack            = { navController.popBackStack() },
+                onPaymentSuccess  = { url -> /* navegar a WebView */ },
+                onCashReservation = { navController.popBackStack() }
+            )
         }
+
 
         composable(AppRoutes.PERFIL) { backStackEntry ->
 
