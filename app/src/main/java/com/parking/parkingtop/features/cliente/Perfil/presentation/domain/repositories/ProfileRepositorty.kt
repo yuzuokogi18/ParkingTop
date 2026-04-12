@@ -30,7 +30,6 @@ interface ProfileRepository {
      * status puede ser: active, completed, cancelled o null
      */
     suspend fun getReservations(
-        status: String? = null
     ): Result<List<Reservation>>
 
     /**

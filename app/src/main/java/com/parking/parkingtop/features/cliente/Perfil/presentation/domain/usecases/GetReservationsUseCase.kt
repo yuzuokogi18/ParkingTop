@@ -8,7 +8,7 @@ import javax.inject.Inject
 class GetReservationsUseCase @Inject constructor(
     private val repository: ProfileRepository
 ) {
-    suspend operator fun invoke(status: String? = null): Result<List<Reservation>> {
-        return repository.getReservations(status)
+    suspend operator fun invoke(): Result<List<Reservation>> {
+        return repository.getReservations()
     }
 }

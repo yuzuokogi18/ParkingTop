@@ -31,8 +31,6 @@ data class ProfileState(
     val isUpdatingProfile: Boolean            = false,
     val updateSuccess: Boolean                = false,
     val logoutSuccess: Boolean                = false,
-
-    // ✅ capacidades de cámara detectadas al inicio
     val cameraAvailable: Boolean              = false,
     val frontCameraAvailable: Boolean         = false,
     val showCameraPermissionRationale: Boolean = false
@@ -40,13 +38,13 @@ data class ProfileState(
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val getProfileUseCase: GetProfileUseCase,
-    private val updateProfileUseCase: UpdateProfileUseCase,
-    private val getVehiclesUseCase: GetVehiclesUseCase,
+    private val getProfileUseCase:      GetProfileUseCase,
+    private val updateProfileUseCase:   UpdateProfileUseCase,
+    private val getVehiclesUseCase:     GetVehiclesUseCase,
     private val getReservationsUseCase: GetReservationsUseCase,
-    private val logoutUseCase: LogoutUseCase,
-    private val deleteVehicleUseCase: DeleteVehicleUseCase,
-    private val profileRepository: ProfileRepository,
+    private val logoutUseCase:          LogoutUseCase,
+    private val deleteVehicleUseCase:   DeleteVehicleUseCase,
+    private val profileRepository:      ProfileRepository,
     private val cameraManager:          CameraManager
 ) : ViewModel() {
 
@@ -58,7 +56,6 @@ class ProfileViewModel @Inject constructor(
         loadProfileData()
     }
 
-    // ✅ Detecta hardware disponible al arrancar — sin pedir permisos aún
     private fun checkCameraCapabilities() {
         _state.value = _state.value.copy(
             cameraAvailable      = cameraManager.hasCamera(),
@@ -66,7 +63,6 @@ class ProfileViewModel @Inject constructor(
         )
     }
 
-    // ✅ Llamado desde la UI cuando el sistema deniega el permiso de cámara
     fun onCameraPermissionDenied() {
         _state.value = _state.value.copy(showCameraPermissionRationale = true)
     }
@@ -79,6 +75,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
 
+            // Perfil
             getProfileUseCase().fold(
                 onSuccess = { user ->
                     _state.value = _state.value.copy(user = user)
@@ -91,27 +88,23 @@ class ProfileViewModel @Inject constructor(
                 }
             )
 
+            // Vehículos
             getVehiclesUseCase().fold(
-                onSuccess = { vehicles -> _state.value = _state.value.copy(vehicles = vehicles) },
-                onFailure = { }
-            )
-
-            getReservationsUseCase("active").fold(
-                onSuccess = { reservations ->
-                    _state.value = _state.value.copy(
-                        activeReservations = reservations.filter {
-                            it.status == "confirmed" || it.status == "active"
-                        }
-                    )
+                onSuccess = { vehicles ->
+                    _state.value = _state.value.copy(vehicles = vehicles)
                 },
                 onFailure = { }
             )
 
-            getReservationsUseCase("completed").fold(
+            // ✅ Reservas — una sola llamada, filtra localmente por status
+            getReservationsUseCase().fold(
                 onSuccess = { reservations ->
                     _state.value = _state.value.copy(
-                        reservationHistory = reservations.filter {
-                            it.status == "completed" || it.status == "cancelled"
+                        activeReservations = reservations.filter { reservation ->
+                            reservation.status in listOf("confirmed", "active", "pending")
+                        },
+                        reservationHistory = reservations.filter { reservation ->
+                            reservation.status in listOf("completed", "cancelled", "no_show")
                         }
                     )
                 },

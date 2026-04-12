@@ -27,6 +27,7 @@ import com.parking.parkingtop.features.login.presentation.screens.LoginScreen
 import com.parking.parkingtop.features.login.presentation.screens.WelcomeScreen
 import com.parking.parkingtop.features.register.presentation.screens.RegisterScreen
 import com.example.parkingtop.features.reservations.presentation.screens.ReservationScreen
+import com.parking.parkingtop.features.cliente.ReservaClient.presentation.screens.PaymentWebViewScreen
 import com.parking.parkingtop.features.notifications.presentation.screens.NotificationsScreen
 import com.parking.parkingtop.features.subscritionplan.screens.SubscriptionPlanScreen
 import com.parking.parkingtop.features.propetario.homepropetario.presentation.screens.HomePropetarioScreen
@@ -155,22 +156,30 @@ fun AppNavigation() {
                 parkingId      = parkingId,
                 isOwner        = isOwner,
                 onBackClick    = { navController.popBackStack() },
-                onReserveClick = { navController.navigate(AppRoutes.reservaClient(parkingId)) }
+                // ✅ Usa AppRoutes.reserva() que genera "reserva/{parkingId}"
+                onReserveClick = { navController.navigate(AppRoutes.reserva(parkingId)) }
             )
         }
 
 
         composable(
-            route = AppRoutes.RESERVA_CLIENT,
-            arguments = listOf(navArgument("parkingIdClient") { type = NavType.StringType })
-        ) { backStackEntry ->
+            route = AppRoutes.RESERVA,   // "reserva/{parkingIdClient}"
+            arguments = listOf(
+                navArgument("parkingIdClient") { type = NavType.StringType }
+            )
+        ) {
             ReservationScreen(
-                onBack            = { navController.popBackStack() },
-                onPaymentSuccess  = { url -> /* navegar a WebView */ },
-                onCashReservation = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onPaymentSuccess = { paymentUrl ->
+                    navController.navigate(AppRoutes.paymentWebView(paymentUrl))
+                },
+                onCashReservation = {
+                    navController.navigate(AppRoutes.HOME_CLIENT) {
+                        popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
+                    }
+                }
             )
         }
-
 
         composable(AppRoutes.PERFIL) { backStackEntry ->
 
@@ -354,6 +363,31 @@ fun AppNavigation() {
                         popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = AppRoutes.PAYMENT_WEBVIEW,
+            arguments = listOf(navArgument("url") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val url = Uri.decode(backStackEntry.arguments?.getString("url") ?: "")
+            PaymentWebViewScreen(
+                paymentUrl       = url,
+                onPaymentSuccess = {
+                    navController.navigate(AppRoutes.HOME_CLIENT) {
+                        popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
+                    }
+                },
+                onPaymentFailure = {
+                    navController.popBackStack()
+                    navController.popBackStack() // sale también del ReservationScreen
+                },
+                onPaymentPending = {
+                    navController.navigate(AppRoutes.HOME_CLIENT) {
+                        popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
+                    }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
     }
