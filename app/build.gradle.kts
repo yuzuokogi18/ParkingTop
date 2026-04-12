@@ -5,15 +5,16 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services)
 }
 
 android {
-    namespace = "com.example.parkingtop"
+    namespace = "com.parking.parkingtop"
     // Subimos a 36 para satisfacer los requisitos de las librerías AndroidX (Core 1.17.0, Activity 1.12.4)
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.parkingtop"
+        applicationId = "com.parking.parkingtop"
         minSdk = 24
         // Mantenemos 34 para asegurar estabilidad en la instalación y ejecución
         targetSdk = 34
@@ -62,6 +63,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.biometric)
     
     // Play Services Location
     implementation(libs.play.location)
@@ -74,6 +76,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.material3)
     ksp(libs.hilt.compiler)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.compiler.work)
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
@@ -87,6 +95,9 @@ dependencies {
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)   // opcional
 
     // Serialization
     coreLibraryDesugaring(libs.desugar.jdk)
