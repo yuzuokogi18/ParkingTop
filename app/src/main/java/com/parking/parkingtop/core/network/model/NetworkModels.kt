@@ -126,3 +126,49 @@ data class TopEarnerDto(
     val fullName: String? = null,
     val totalEarnings: String? = null
 )
+
+// ═══════════════════════════════════════
+// SUBSCRIPTION MODELS
+// ═══════════════════════════════════════
+
+@Serializable
+data class SubscriptionPlanDto(
+    val id: String,
+    val name: String,
+    val description: String,
+    val price: Double,
+    val interval: String,
+    val features: List<String> = emptyList()
+)
+
+@Serializable
+data class UserSubscriptionDto(
+    val id: String,
+    val userId: String,
+    val planId: String,
+    val status: String,
+    val currentPeriodEnd: String? = null,
+    val cancelAtPeriodEnd: Boolean = false,
+    val plan: SubscriptionPlanDto? = null
+)
+
+@Serializable
+data class CreateSubscriptionRequest(
+    val planId: String
+)
+
+@Serializable
+data class CreateSubscriptionResultDto(
+    val subscription: UserSubscriptionDto,
+    val paymentUrl: String? = null
+)
+
+@Serializable
+data class UpdateSubscriptionPlanRequest(
+    val planId: String
+)
+
+@Serializable
+data class CancelSubscriptionRequest(
+    val reason: String? = null
+)
