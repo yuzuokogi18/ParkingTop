@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "314800401424",
+    "project_id": "parking-up-6a83a",
+    "storage_bucket": "parking-up-6a83a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:314800401424:android:13b3cee90fae4bb92aae95",
+        "android_client_info": {
+          "package_name": "com.parking.parkingtop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9OSk9Er0EOx7r08FXug-bgV0w1Q62l3s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
