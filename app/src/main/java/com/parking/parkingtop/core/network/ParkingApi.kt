@@ -1,7 +1,6 @@
 package com.parking.parkingtop.core.network
 
-import com.parking.parkingtop.core.network.model.ApiResponse
-import com.parking.parkingtop.core.network.model.LoginRequest
+import com.parking.parkingtop.core.network.model.*
 import com.parking.parkingtop.features.cliente.BusquedaClient.data.datasources.models.ParkingLotDTO
 import com.parking.parkingtop.features.cliente.CreateVehicleClient.data.datasources.models.CreateVehicleRequest
 import com.parking.parkingtop.features.cliente.DetalleEstacionamientClient.data.datasources.models.ParkingLotDetailDTO
@@ -25,10 +24,6 @@ import com.parking.parkingtop.features.register.data.datasources.models.Register
 import com.parking.parkingtop.features.cliente.Reviews.data.datasources.models.CreateReviewRequest
 import com.parking.parkingtop.features.cliente.Reviews.data.datasources.models.ReviewDTO
 import com.parking.parkingtop.features.notifications.data.datasources.models.RegisterFcmTokenRequest
-import com.parking.parkingtop.core.network.model.OwnerBalanceDto
-import com.parking.parkingtop.core.network.model.PayoutDto
-import com.parking.parkingtop.core.network.model.PayoutListData
-import com.parking.parkingtop.core.network.model.RequestPayoutBody
 import com.parking.parkingtop.features.notifications.data.datasources.models.NotificationDTO
 import com.parking.parkingtop.features.notifications.data.datasources.models.UnreadCountDTO
 import com.parking.parkingtop.features.propetario.misespaciospropetario.data.datasources.models.CreateParkingSpotRequest
@@ -285,6 +280,42 @@ interface ParkingApi {
         @Query("page") page: Int = 1,
         @Query("perPage") perPage: Int = 20
     ): Response<ApiResponse<PayoutListData>>
+
+    // ═══════════════════════════════════════
+    // SUBSCRIPTIONS ENDPOINTS
+    // ═══════════════════════════════════════
+    @GET("v1/subscriptions/plans")
+    suspend fun getPlans(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<List<SubscriptionPlanDto>>>
+
+    @GET("v1/subscriptions/my-subscription")
+    suspend fun getMySubscription(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<UserSubscriptionDto>>
+
+    @POST("v1/subscriptions")
+    suspend fun createSubscription(
+        @Header("Authorization") token: String,
+        @Body body: CreateSubscriptionRequest
+    ): Response<ApiResponse<CreateSubscriptionResultDto>>
+
+    @PUT("v1/subscriptions/plan")
+    suspend fun updatePlan(
+        @Header("Authorization") token: String,
+        @Body body: UpdateSubscriptionPlanRequest
+    ): Response<ApiResponse<UserSubscriptionDto>>
+
+    @POST("v1/subscriptions/cancel")
+    suspend fun cancelSubscription(
+        @Header("Authorization") token: String,
+        @Body body: CancelSubscriptionRequest
+    ): Response<ApiResponse<UserSubscriptionDto>>
+
+    @POST("v1/subscriptions/reactivate")
+    suspend fun reactivateSubscription(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<UserSubscriptionDto>>
 
 
     @GET("v1/parking-spots/parking-lot/{parkingLotId}")
