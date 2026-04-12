@@ -279,6 +279,26 @@ fun ProfileClientScreen(
                             onCancel = { }
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        "Historial de Reservas",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+
+                    state.reservationHistory.forEach { reservation ->
+                        ReservationProfileCard(
+                            parkingName = reservation.parkingLotName,
+                            status = reservation.status,
+                            date = reservation.startTime,
+                            time = "${reservation.startTime} - ${reservation.endTime}",
+                            price = "$${reservation.totalCost}",
+                            onCancel = { /* normalmente no se cancela historial */ }
+                        )
+                    }
                 } else {
                     Spacer(modifier = Modifier.height(24.dp))
                     OwnerBalanceCard(

@@ -66,9 +66,9 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getReservations(status: String?): Result<List<Reservation>> {
+    override suspend fun getReservations(): Result<List<Reservation>> {
         return try {
-            val response = api.getReservations(getAuthToken(), status)
+            val response = api.getReservations(getAuthToken())
 
             if (response.isSuccessful && response.body()?.data != null) {
                 val reservations = response.body()!!.data!!.map { it.toDomain() }
