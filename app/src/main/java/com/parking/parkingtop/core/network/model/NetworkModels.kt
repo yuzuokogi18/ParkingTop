@@ -135,10 +135,19 @@ data class TopEarnerDto(
 data class SubscriptionPlanDto(
     val id: String,
     val name: String,
+    val displayName: String,
     val description: String,
-    val price: Double,
-    val interval: String,
-    val features: List<String> = emptyList()
+    val monthlyPrice: String,
+    val setupFee: String,
+    val maxParkingLots: Int?,
+    val maxSpotsPerLot: Int?,
+    val commissionRate: String,
+    val features: List<String>,
+    val trialDays: Int,
+    val stripePriceId: String?, // 👈 puede ser null
+    val isActive: Boolean,
+    val createdAt: String,
+    val updatedAt: String
 )
 
 @Serializable

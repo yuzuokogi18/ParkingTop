@@ -149,7 +149,7 @@ fun SubscriptionPlanScreen(
                         PlanCard(
                             title = plan.name,
                             description = plan.description,
-                            price = plan.price.toString(),
+                            price = plan.monthlyPrice,
                             lotes = if (plan.name.contains("Básico", true)) "1" else if (plan.name.contains("Premium", true)) "5" else "∞",
                             sitios = if (plan.name.contains("Básico", true)) "50" else "∞",
                             comision = if (plan.name.contains("Básico", true)) "15%" else if (plan.name.contains("Premium", true)) "12%" else "10%",

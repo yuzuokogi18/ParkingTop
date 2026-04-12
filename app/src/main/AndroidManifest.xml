@@ -36,15 +36,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!--
-                Deep link con esquema custom (parkingtop://)
-                autoVerify=true es SOLO para http/https — no va aquí
-            -->
+            <!-- Deep link: pago de reserva → parkingtop://payment/... -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="parkingtop" android:host="payment" />
+            </intent-filter>
+
+            <!-- Deep link: resultado de suscripción → parkingtop://subscription/... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="parkingtop" android:host="subscription" />
             </intent-filter>
         </activity>
 

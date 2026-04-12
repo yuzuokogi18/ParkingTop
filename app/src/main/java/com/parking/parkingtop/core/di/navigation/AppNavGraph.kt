@@ -3,6 +3,7 @@ package com.parking.parkingtop.core.di.navigation
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -389,6 +390,24 @@ fun AppNavigation() {
                 },
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable("subscription/{status}") { backStackEntry ->
+            val status = backStackEntry.arguments?.getString("status") ?: "success"
+            LaunchedEffect(Unit) {
+                if (status == "approved" || status == "success") {
+                    navController.navigate(AppRoutes.HOME_OWNER) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                } else {
+                    navController.navigate(AppRoutes.SUBSCRIPTION) {
+                        popUpTo(AppRoutes.SUBSCRIPTION) { inclusive = false }
+                    }
+                }
+            }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         }
     }
 }
