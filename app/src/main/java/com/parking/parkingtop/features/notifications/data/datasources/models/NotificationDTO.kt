@@ -1,5 +1,6 @@
 package com.parking.parkingtop.features.notifications.data.datasources.models
 
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -15,12 +16,10 @@ data class NotificationDTO(
     @SerialName("data")          val data: Map<String, String>? = null
 )
 
-@Serializable
 data class RegisterFcmTokenRequest(
-    @SerialName("token")    val token: String,
-    @SerialName("platform") val platform: String = "android"
+    @SerializedName("token")    val token: String,
+    @SerializedName("platform") val platform: String  // sin default, siempre requerido
 )
-
 @Serializable
 data class UnreadCountDTO(
     @SerialName("count") val count: Int

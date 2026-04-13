@@ -104,6 +104,13 @@ fun CreateParkingScreen(
         }
     }
 
+    LaunchedEffect(state.location) {
+        state.location?.let {
+            latitude = it.latitude.toString()
+            longitude = it.longitude.toString()
+        }
+    }
+
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = { },

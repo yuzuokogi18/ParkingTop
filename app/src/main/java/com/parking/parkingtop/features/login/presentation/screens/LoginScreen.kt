@@ -58,7 +58,13 @@ fun LoginScreen(
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
             when (state.role) {
-                "owner" -> onSubscription()
+                "owner" -> {
+                    if (state.hasActiveSubscription) {
+                        onHome("owner")         // → HOME_OWNER
+                    } else {
+                        onSubscription()        // → SUBSCRIPTION (planes)
+                    }
+                }
                 else -> onHome(state.role ?: "")
             }
         }

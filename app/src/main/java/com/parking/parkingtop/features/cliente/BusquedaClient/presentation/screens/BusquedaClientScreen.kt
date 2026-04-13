@@ -188,11 +188,6 @@ fun BusquedaClientScreen(
                     tonalElevation = 0.dp
                 ) {
                     NavigationBarItem(
-                        selected = selectedTab == 0, onClick = onHomeClick,
-                        icon  = { Icon(Icons.Default.Home, "Home", Modifier.size(20.dp)) },
-                        label = { Text("Home", fontSize = 10.sp) }
-                    )
-                    NavigationBarItem(
                         selected = selectedTab == 1, onClick = { },
                         icon  = { Icon(Icons.Default.Search, "Buscar", Modifier.size(20.dp)) },
                         label = { Text("Buscar", fontSize = 10.sp) }

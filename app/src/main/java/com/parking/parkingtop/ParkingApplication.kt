@@ -24,15 +24,7 @@ class ParkingTopApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-
         MapLibre.getInstance(this, null, WellKnownTileServer.MapLibre)
-
         NotificationChannels.createAll(this)
-
-        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
-            appScope.launch {
-                fcmTokenRepository.registerToken(token)
-            }
-        }
     }
 }

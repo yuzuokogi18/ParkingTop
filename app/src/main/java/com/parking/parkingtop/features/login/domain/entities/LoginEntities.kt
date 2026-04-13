@@ -13,3 +13,10 @@ data class AuthResult(
     val token: String,
     val refreshToken: String? = null
 )
+
+data class UserSubscription(
+    val id: String,
+    val status: String,
+    val plan: String,
+    val currentPeriodEnd: String?
+)

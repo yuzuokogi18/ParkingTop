@@ -19,7 +19,6 @@ import com.parking.parkingtop.features.cliente.BusquedaClient.presentation.scree
 import com.parking.parkingtop.features.cliente.CreateVehicleClient.presentation.screens.CreateVehicleScreen
 import com.parking.parkingtop.features.cliente.DetalleEstacionamientClient.presentation.screens.DetalleEstacionamientoScreen
 import com.parking.parkingtop.features.cliente.EditVehicleClient.presentation.screens.EditVehicleScreen
-import com.parking.parkingtop.features.cliente.HomeClient.presentation.screens.HomeClientScreen
 import com.parking.parkingtop.features.cliente.Perfil.presentation.screens.ProfileClientScreen
 import com.parking.parkingtop.features.cliente.Perfil.presentation.screens.ProfileViewModel
 import com.parking.parkingtop.features.cliente.Reviews.presentation.screens.ReviewScreen
@@ -56,7 +55,7 @@ fun AppNavigation() {
             LoginScreen(
                 onSubscription  = { navController.navigate(AppRoutes.SUBSCRIPTION) },
                 onHome          = { role -> 
-                    val route = if (role == "owner") AppRoutes.HOME_OWNER else AppRoutes.HOME_CLIENT
+                    val route = if (role == "owner") AppRoutes.HOME_OWNER else AppRoutes.BUSQUEDA
                     navController.navigate(route) {
                         popUpTo(AppRoutes.LOGIN) { inclusive = true }
                     }
@@ -74,7 +73,7 @@ fun AppNavigation() {
                 },
                 onHome = {
                     // Customer → va directo al home
-                    navController.navigate(AppRoutes.HOME_CLIENT) {
+                    navController.navigate(AppRoutes.BUSQUEDA) {
                         popUpTo(AppRoutes.REGISTER) { inclusive = true }
                     }
                 },
@@ -86,16 +85,6 @@ fun AppNavigation() {
             SubscriptionPlanScreen(
                 onBackClick    = { navController.popBackStack() },
                 onUpgradeClick = { navController.navigate(AppRoutes.HOME_OWNER) }
-            )
-        }
-
-        composable(AppRoutes.HOME_CLIENT) {
-            HomeClientScreen(
-                onSearchClick  = { navController.navigate(AppRoutes.BUSQUEDA) },
-                onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
-                onParkingClick = { parking ->
-                    navController.navigate(AppRoutes.parkingDetail(parking.name, isOwner = false))
-                }
             )
         }
 
@@ -136,7 +125,7 @@ fun AppNavigation() {
 
         composable(AppRoutes.BUSQUEDA) {
             BusquedaClientScreen(
-                onHomeClick    = { navController.navigate(AppRoutes.HOME_CLIENT) },
+                onHomeClick    = { /* ya estás aquí */ },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
                 onParkingClick = { parkingId ->
                     navController.navigate(AppRoutes.parkingDetail(parkingId, isOwner = false))

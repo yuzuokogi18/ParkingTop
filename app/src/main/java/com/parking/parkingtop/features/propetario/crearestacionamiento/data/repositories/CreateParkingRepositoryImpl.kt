@@ -3,13 +3,13 @@ package com.parking.parkingtop.features.propetario.crearestacionamiento.data.rep
 import android.webkit.MimeTypeMap
 import com.parking.parkingtop.core.datastore.TokenDataStore
 import com.parking.parkingtop.core.network.ParkingApi
-import com.parking.parkingtop.features.cliente.HomeClient.data.datasources.models.OperatingHoursDTO
 import com.parking.parkingtop.features.propetario.crearestacionamiento.data.datasources.mapper.toDto
 import com.parking.parkingtop.features.propetario.crearestacionamiento.domain.entities.CreateParkingData
 import com.parking.parkingtop.features.propetario.crearestacionamiento.domain.entities.DayHours
 import com.parking.parkingtop.features.propetario.crearestacionamiento.domain.entities.OperatingHours
 import com.parking.parkingtop.features.propetario.crearestacionamiento.domain.repositories.CreateParkingRepository
 import kotlinx.coroutines.flow.firstOrNull
+import com.parking.parkingtop.core.network.model.OperatingHoursDTO
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -24,48 +24,47 @@ class CreateParkingRepositoryImpl @Inject constructor(
     private val tokenDataStore: TokenDataStore
 ) : CreateParkingRepository {
 
+    // En CreateParkingRepositoryImpl, rama sin imágenes:
     override suspend fun createParking(data: CreateParkingData): Result<Unit> {
         return try {
             val token = tokenDataStore.accessToken.firstOrNull() ?: ""
             if (token.isEmpty()) return Result.failure(Exception("No hay sesión activa"))
 
-            if (data.images.isEmpty()) {
-                val response = api.createParking("Bearer $token", data.toDto())
-                if (response.isSuccessful) Result.success(Unit)
-                else Result.failure(Exception(response.errorBody()?.string() ?: "Error al crear"))
-            } else {
-                val imageParts = data.images.map { file ->
-                    val extension = file.extension.lowercase()
-                    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
-                    val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
-                    MultipartBody.Part.createFormData("images", file.name, requestFile)
-                }
-
-                val response = api.createParkingWithImages(
-                    token = "Bearer $token",
-                    name = data.name.toPart(),
-                    description = data.description.toPart(),
-                    address = data.address.toPart(),
-                    city = data.city.toPart(),
-                    state = data.state.toPart(),
-                    postalCode = data.postalCode.toPart(),
-                    latitude = data.latitude,
-                    longitude = data.longitude,
-                    totalSpots = data.totalSpots,
-                    basePricePerHour = data.basePricePerHour,
-                    overtimeRatePerHour = data.overtimeRatePerHour,
-                    features = data.features.joinToString(",").toPart(),
-                    operatingHours = Json.encodeToString(data.operatingHours.toDto())
-                        .toRequestBody("text/plain".toMediaTypeOrNull()),
-                    images = imageParts
+            // Siempre multipart, pero features como JSON array string
+            val imageParts = data.images.map { file ->
+                val extension = file.extension.lowercase()
+                val mimeType = MimeTypeMap.getSingleton()
+                    .getMimeTypeFromExtension(extension) ?: "image/jpeg"
+                MultipartBody.Part.createFormData(
+                    "images", file.name,
+                    file.asRequestBody(mimeType.toMediaTypeOrNull())
                 )
-
-                if (response.isSuccessful) Result.success(Unit)
-                else {
-                    val error = response.errorBody()?.string()
-                    Result.failure(Exception(error ?: "Error al crear con imágenes"))
-                }
             }
+
+            val response = api.createParkingWithImages(
+                token               = "Bearer $token",
+                name                = data.name.toPart(),
+                description         = data.description.toPart(),
+                address             = data.address.toPart(),
+                city                = data.city.toPart(),
+                state               = data.state.toPart(),
+                postalCode          = data.postalCode.toPart(),
+                latitude            = data.latitude.toString().toPart(),
+                longitude           = data.longitude.toString().toPart(),
+                totalSpots          = data.totalSpots.toString().toPart(),
+                basePricePerHour    = data.basePricePerHour.toString().toPart(),
+                overtimeRatePerHour = data.overtimeRatePerHour.toString().toPart(),
+                // features como JSON array: ["techado","cctv"]
+
+                features = data.features.joinToString(",")
+                    .toRequestBody("text/plain".toMediaTypeOrNull()),
+                operatingHours      = Json.encodeToString(data.operatingHours.toDto())
+                    .toRequestBody("text/plain".toMediaTypeOrNull()),
+                images              = imageParts
+            )
+
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception(response.errorBody()?.string() ?: "Error al crear"))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -122,45 +121,43 @@ class CreateParkingRepositoryImpl @Inject constructor(
     override suspend fun updateParking(id: String, data: CreateParkingData): Result<Unit> {
         return try {
             val token = tokenDataStore.accessToken.firstOrNull() ?: ""
-            
-            if (data.images.isEmpty()) {
-                val response = api.updateParking("Bearer $token", id, data.toDto())
-                if (response.isSuccessful) Result.success(Unit)
-                else Result.failure(Exception(response.errorBody()?.string() ?: "Error al actualizar"))
-            } else {
-                val imageParts = data.images.map { file ->
-                    val extension = file.extension.lowercase()
-                    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
-                    val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
-                    MultipartBody.Part.createFormData("images", file.name, requestFile)
-                }
+            if (token.isEmpty()) return Result.failure(Exception("No hay sesión activa"))
 
-                val response = api.updateParkingWithImages(
-                    token = "Bearer $token",
-                    id = id,
-                    name = data.name.toPart(),
-                    description = data.description.toPart(),
-                    address = data.address.toPart(),
-                    city = data.city.toPart(),
-                    state = data.state.toPart(),
-                    postalCode = data.postalCode.toPart(),
-                    latitude = data.latitude,
-                    longitude = data.longitude,
-                    totalSpots = data.totalSpots,
-                    basePricePerHour = data.basePricePerHour,
-                    overtimeRatePerHour = data.overtimeRatePerHour,
-                    features = data.features.joinToString(",").toPart(),
-                    operatingHours = Json.encodeToString(data.operatingHours.toDto())
-                        .toRequestBody("text/plain".toMediaTypeOrNull()),
-                    images = imageParts
+            val imageParts = data.images.map { file ->
+                val extension = file.extension.lowercase()
+                val mimeType = MimeTypeMap.getSingleton()
+                    .getMimeTypeFromExtension(extension) ?: "image/jpeg"
+                MultipartBody.Part.createFormData(
+                    "images", file.name,
+                    file.asRequestBody(mimeType.toMediaTypeOrNull())
                 )
+            }
 
-                if (response.isSuccessful) {
-                    Result.success(Unit)
-                } else {
-                    val error = response.errorBody()?.string()
-                    Result.failure(Exception(error ?: "Error al actualizar con imágenes"))
-                }
+            val response = api.updateParkingWithImages(
+                token               = "Bearer $token",
+                id                  = id,
+                name                = data.name.toPart(),
+                description         = data.description.toPart(),
+                address             = data.address.toPart(),
+                city                = data.city.toPart(),
+                state               = data.state.toPart(),
+                postalCode          = data.postalCode.toPart(),
+                latitude            = data.latitude.toString().toPart(),
+                longitude           = data.longitude.toString().toPart(),
+                totalSpots          = data.totalSpots.toString().toPart(),
+                basePricePerHour    = data.basePricePerHour.toString().toPart(),
+                overtimeRatePerHour = data.overtimeRatePerHour.toString().toPart(),
+                features = data.features.joinToString(",")
+                    .toRequestBody("text/plain".toMediaTypeOrNull()),
+                operatingHours      = Json.encodeToString(data.operatingHours.toDto())
+                    .toRequestBody("text/plain".toMediaTypeOrNull()),
+                images              = imageParts
+            )
+
+            if (response.isSuccessful) Result.success(Unit)
+            else {
+                val error = response.errorBody()?.string()
+                Result.failure(Exception(error ?: "Error al actualizar estacionamiento"))
             }
         } catch (e: Exception) {
             Result.failure(e)

@@ -4,7 +4,6 @@ import com.parking.parkingtop.core.network.model.*
 import com.parking.parkingtop.features.cliente.BusquedaClient.data.datasources.models.ParkingLotDTO
 import com.parking.parkingtop.features.cliente.CreateVehicleClient.data.datasources.models.CreateVehicleRequest
 import com.parking.parkingtop.features.cliente.DetalleEstacionamientClient.data.datasources.models.ParkingLotDetailDTO
-import com.parking.parkingtop.features.cliente.HomeClient.data.datasources.models.ParkingDTO
 
 import com.parking.parkingtop.features.cliente.ReservaClient.data.datasources.models.CreateReservationRequest
 import com.parking.parkingtop.features.cliente.ReservaClient.data.datasources.models.CreateReservationResponseDTO
@@ -103,7 +102,7 @@ interface ParkingApi {
     // ═══════════════════════════════════════
     // RESERVATIONS ENDPOINTS
     // ═══════════════════════════════════════
-    @GET("v1/reservations")
+    @GET("v1/reservations/my")
     suspend fun getReservations(
         @Header("Authorization") token: String,
         @Query("status") status: String? = null
@@ -125,12 +124,6 @@ interface ParkingApi {
     // ═══════════════════════════════════════
     // PARKING LOTS ENDPOINTS
     // ═══════════════════════════════════════
-    @GET("v1/parkings/nearby")
-    suspend fun getNearbyParkings(
-        @Query("latitude") latitude: Double,
-        @Query("longitude") longitude: Double,
-        @Query("radius") radius: Int = 5000
-    ): Response<ApiResponse<List<ParkingDTO>>>
 
     @GET("v1/parkings/parking-lots")
     suspend fun getParkingLots(): Response<ApiResponse<List<ParkingLotDTO>>>
@@ -172,16 +165,15 @@ interface ParkingApi {
         @Part("city") city: RequestBody?,
         @Part("state") state: RequestBody?,
         @Part("postalCode") postalCode: RequestBody?,
-        @Part("latitude") latitude: Double?,
-        @Part("longitude") longitude: Double?,
-        @Part("totalSpots") totalSpots: Int?,
-        @Part("basePricePerHour") basePricePerHour: Double?,
-        @Part("overtimeRatePerHour") overtimeRatePerHour: Double?,
+        @Part("latitude") latitude: RequestBody?,
+        @Part("longitude") longitude: RequestBody?,
+        @Part("totalSpots") totalSpots: RequestBody?,
+        @Part("basePricePerHour") basePricePerHour: RequestBody?,
+        @Part("overtimeRatePerHour") overtimeRatePerHour: RequestBody?,
         @Part("features") features: RequestBody?,
         @Part("operatingHours") operatingHours: RequestBody?,
         @Part images: List<MultipartBody.Part>?
     ): Response<ApiResponse<Unit>>
-
     @PUT("v1/parkings/{id}")
     suspend fun updateParking(
         @Header("Authorization") token: String,
@@ -200,16 +192,15 @@ interface ParkingApi {
         @Part("city") city: RequestBody?,
         @Part("state") state: RequestBody?,
         @Part("postalCode") postalCode: RequestBody?,
-        @Part("latitude") latitude: Double?,
-        @Part("longitude") longitude: Double?,
-        @Part("totalSpots") totalSpots: Int?,
-        @Part("basePricePerHour") basePricePerHour: Double?,
-        @Part("overtimeRatePerHour") overtimeRatePerHour: Double?,
+        @Part("latitude") latitude: RequestBody?,
+        @Part("longitude") longitude: RequestBody?,
+        @Part("totalSpots") totalSpots: RequestBody?,
+        @Part("basePricePerHour") basePricePerHour: RequestBody?,
+        @Part("overtimeRatePerHour") overtimeRatePerHour: RequestBody?,
         @Part("features") features: RequestBody?,
         @Part("operatingHours") operatingHours: RequestBody?,
         @Part images: List<MultipartBody.Part>?
     ): Response<ApiResponse<Unit>>
-
     @DELETE("v1/parkings/{id}")
     suspend fun deleteParking(@Header("Authorization") token: String, @Path("id") id: String): Response<ApiResponse<Unit>>
 
@@ -292,7 +283,7 @@ interface ParkingApi {
     @GET("v1/subscriptions/my-subscription")
     suspend fun getMySubscription(
         @Header("Authorization") token: String
-    ): Response<ApiResponse<UserSubscriptionDto>>
+    ): Response<ApiResponse<UserSubscriptionResponseDto>>
 
     @POST("v1/subscriptions")
     suspend fun createSubscription(
@@ -373,6 +364,6 @@ interface ParkingApi {
     @POST("v1/notifications/fcm-token")
     suspend fun registerFcmToken(
         @Header("Authorization") token: String,
-        @Body body: RegisterFcmTokenRequest
+        @Body body: Map<String, String>   // ← Map<String, String>
     ): Response<ApiResponse<Unit>>
 }

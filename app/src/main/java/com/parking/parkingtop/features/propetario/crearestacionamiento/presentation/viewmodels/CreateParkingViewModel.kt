@@ -32,22 +32,20 @@ class CreateParkingViewModel @Inject constructor(
 
     fun getCurrentLocation() {
         viewModelScope.launch {
-
             if (!gpsManager.isGPSEnabled()) {
-                _state.value = _state.value.copy(
-                    error = "El GPS está desactivado"
-                )
+                _state.value = _state.value.copy(error = "El GPS está desactivado")
                 return@launch
             }
 
             val location = gpsManager.getLastLocation()
 
-            _state.value = _state.value.copy(
-                location = location
-            )
+            if (location != null) {
+                _state.value = _state.value.copy(location = location, error = null)
+            } else {
+                _state.value = _state.value.copy(error = "No se pudo obtener la ubicación")
+            }
         }
     }
-
     fun createParking(
         name: String,
         description: String,

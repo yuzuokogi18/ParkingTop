@@ -7,7 +7,7 @@ object AppRoutes {
     const val LOGIN                   = "login"
     const val REGISTER                = "register"
     const val SUBSCRIPTION            = "subscription"
-    const val HOME_CLIENT             = "home_client"
+    const val HOME_CLIENT             = "busqueda"
     const val HOME_OWNER              = "home_owner"
     const val MY_SPACES               = "my_spaces"
     const val CREATE_PARKING          = "create_parking?isFirst={isFirst}"

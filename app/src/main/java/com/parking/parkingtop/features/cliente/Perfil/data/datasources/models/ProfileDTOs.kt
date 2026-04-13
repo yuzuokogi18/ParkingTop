@@ -58,6 +58,8 @@ data class VehicleDTO(
     val isDefault: Boolean
 )
 
+
+@Serializable
 data class ReservationDTO(
     val id: String,
 
