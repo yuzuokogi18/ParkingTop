@@ -2,9 +2,11 @@ package com.parking.parkingtop.features.login.data.repositories
 
 import com.parking.parkingtop.core.network.ParkingApi
 import com.parking.parkingtop.core.network.model.LoginRequest
+import com.parking.parkingtop.core.network.model.UserSubscriptionDto
 import com.parking.parkingtop.features.login.domain.entities.AuthResult
 import com.parking.parkingtop.features.login.domain.repositories.LoginRepository
 import com.parking.parkingtop.features.login.domain.entities.User
+import com.parking.parkingtop.features.login.domain.entities.UserSubscription
 import javax.inject.Inject
 
 class LoginRepositoryImpl @Inject constructor(
@@ -38,6 +40,41 @@ class LoginRepositoryImpl @Inject constructor(
             } else {
                 Result.failure(Exception(response.body()?.error?.message ?: "Error al iniciar sesión"))
             }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    override suspend fun getMySubscription(token: String): Result<UserSubscription?> {
+        return try {
+
+            val response = api.getMySubscription(token)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+
+                val data = response.body()?.data
+
+                if (data != null) {
+                    Result.success(
+                        UserSubscription(
+                            id = data.id,
+                            status = data.status,
+                            plan = data.planDetail.name,
+                            currentPeriodEnd = data.currentPeriodEnd
+                        )
+                    )
+                } else {
+                    // ❌ No tiene suscripción
+                    Result.success(null)
+                }
+
+            } else {
+                Result.failure(
+                    Exception(response.body()?.error?.message ?: "Error al obtener suscripción")
+                )
+            }
+
         } catch (e: Exception) {
             Result.failure(e)
         }

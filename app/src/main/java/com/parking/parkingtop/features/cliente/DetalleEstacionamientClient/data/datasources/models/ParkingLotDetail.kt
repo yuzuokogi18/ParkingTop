@@ -1,7 +1,7 @@
 package com.parking.parkingtop.features.cliente.DetalleEstacionamientClient.data.datasources.models
 
+import com.parking.parkingtop.core.network.model.OperatingHoursDTO
 import kotlinx.serialization.Serializable
-import com.parking.parkingtop.features.cliente.HomeClient.data.datasources.models.OperatingHoursDTO
 
 @Serializable
 data class ParkingLotDetailDTO(

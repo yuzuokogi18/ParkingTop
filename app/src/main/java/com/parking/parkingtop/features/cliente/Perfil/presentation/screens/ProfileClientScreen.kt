@@ -197,8 +197,6 @@ fun ProfileClientScreen(
                                 selectedIconColor = BlueSecondary, selectedTextColor = BlueSecondary,
                                 indicatorColor = Color.Transparent))
                     } else {
-                        NavigationBarItem(selected = false, onClick = onHomeClick,
-                            icon = { Icon(Icons.Default.Home, null, Modifier.size(20.dp)) }, label = { Text("Home", fontSize = 10.sp) })
                         NavigationBarItem(selected = false, onClick = onSearchClick,
                             icon = { Icon(Icons.Default.Search, null, Modifier.size(20.dp)) }, label = { Text("Buscar", fontSize = 10.sp) })
                         NavigationBarItem(selected = true, onClick = { },
@@ -271,15 +269,11 @@ fun ProfileClientScreen(
                     Text("Reservas Activas", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Gray)
                     state.activeReservations.forEach { reservation ->
                         ReservationProfileCard(
-                            parkingName = reservation.parkingLotName,
-                            status = reservation.status,
-                            date = reservation.startTime,
-                            time = "${reservation.startTime} - ${reservation.endTime}",
-                            price = "$${reservation.totalCost}",
-                            onCancel = { }
+                            reservation  = reservation,
+                            isCancelling = state.cancellingReservationId == reservation.id,
+                            onCancel     = { viewModel.cancelReservation(reservation.id) }
                         )
                     }
-
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
@@ -291,14 +285,11 @@ fun ProfileClientScreen(
 
                     state.reservationHistory.forEach { reservation ->
                         ReservationProfileCard(
-                            parkingName = reservation.parkingLotName,
-                            status = reservation.status,
-                            date = reservation.startTime,
-                            time = "${reservation.startTime} - ${reservation.endTime}",
-                            price = "$${reservation.totalCost}",
-                            onCancel = { /* normalmente no se cancela historial */ }
+                            reservation = reservation,
+                            onCancel    = null   // historial no se puede cancelar
                         )
                     }
+
                 } else {
                     Spacer(modifier = Modifier.height(24.dp))
                     OwnerBalanceCard(

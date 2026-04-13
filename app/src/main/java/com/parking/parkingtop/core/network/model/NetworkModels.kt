@@ -1,5 +1,6 @@
 package com.parking.parkingtop.core.network.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -153,14 +154,26 @@ data class SubscriptionPlanDto(
 @Serializable
 data class UserSubscriptionDto(
     val id: String,
-    val userId: String,
-    val planId: String,
+    val userId: String? = null,   // ✅ ahora opcional
+    val planId: String? = null,   // ✅ ahora opcional
     val status: String,
     val currentPeriodEnd: String? = null,
     val cancelAtPeriodEnd: Boolean = false,
-    val plan: SubscriptionPlanDto? = null
+    val plan: String
 )
 
+
+@Serializable
+data class UserSubscriptionResponseDto(
+    val id: String,
+    val userId: String? = null,
+    val planId: String? = null,
+    val status: String,
+    val currentPeriodEnd: String? = null,
+    val cancelAtPeriodEnd: Boolean = false,
+    @SerialName("plan")
+    val planDetail: SubscriptionPlanDto
+)
 @Serializable
 data class CreateSubscriptionRequest(
     val planId: String
@@ -180,4 +193,11 @@ data class UpdateSubscriptionPlanRequest(
 @Serializable
 data class CancelSubscriptionRequest(
     val reason: String? = null
+)
+
+
+@Serializable
+data class OperatingHoursDTO(
+    val open: String,
+    val close: String
 )

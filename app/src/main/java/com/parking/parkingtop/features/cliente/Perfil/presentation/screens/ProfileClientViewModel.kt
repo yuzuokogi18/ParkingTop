@@ -9,6 +9,7 @@ import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.entiti
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.entities.User
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.entities.Vehicle
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.repositories.ProfileRepository
+import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.usecases.CancelReservationUseCase
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.usecases.DeleteVehicleUseCase
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.usecases.GetProfileUseCase
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.usecases.GetReservationsUseCase
@@ -33,7 +34,8 @@ data class ProfileState(
     val logoutSuccess: Boolean                = false,
     val cameraAvailable: Boolean              = false,
     val frontCameraAvailable: Boolean         = false,
-    val showCameraPermissionRationale: Boolean = false
+    val showCameraPermissionRationale: Boolean = false,
+    val cancellingReservationId: String? = null
 )
 
 @HiltViewModel
@@ -45,11 +47,14 @@ class ProfileViewModel @Inject constructor(
     private val logoutUseCase:          LogoutUseCase,
     private val deleteVehicleUseCase:   DeleteVehicleUseCase,
     private val profileRepository:      ProfileRepository,
-    private val cameraManager:          CameraManager
+    private val cameraManager:          CameraManager,
+    private val cancelReservationUseCase: CancelReservationUseCase
 ) : ViewModel() {
 
     private val _state = mutableStateOf(ProfileState())
     val state = _state
+
+
 
     init {
         checkCameraCapabilities()
@@ -100,15 +105,19 @@ class ProfileViewModel @Inject constructor(
             getReservationsUseCase().fold(
                 onSuccess = { reservations ->
                     _state.value = _state.value.copy(
-                        activeReservations = reservations.filter { reservation ->
-                            reservation.status in listOf("confirmed", "active", "pending")
+                        activeReservations = reservations.filter {
+                            it.status in listOf("confirmed", "active", "pending")
                         },
-                        reservationHistory = reservations.filter { reservation ->
-                            reservation.status in listOf("completed", "cancelled", "no_show")
+                        reservationHistory = reservations.filter {
+                            it.status in listOf("completed", "cancelled", "no_show")
                         }
                     )
                 },
-                onFailure = { }
+                onFailure = { error ->
+                    _state.value = _state.value.copy(
+                        error = error.message ?: "Error al obtener reservas"
+                    )
+                }
             )
 
             _state.value = _state.value.copy(isLoading = false)
@@ -153,6 +162,27 @@ class ProfileViewModel @Inject constructor(
             }.onFailure { e ->
                 _state.value = _state.value.copy(
                     error = e.message ?: "Error al eliminar el vehículo"
+                )
+            }
+        }
+    }
+
+    fun cancelReservation(reservationId: String) {
+        viewModelScope.launch {
+            // Marca la reserva como "cancelando" para mostrar loading en la card
+            _state.value = _state.value.copy(cancellingReservationId = reservationId)
+
+            cancelReservationUseCase.execute(reservationId).onSuccess {
+                // Quita la reserva de activeReservations localmente sin recargar todo
+                _state.value = _state.value.copy(
+                    activeReservations       = _state.value.activeReservations
+                        .filter { it.id != reservationId },
+                    cancellingReservationId  = null
+                )
+            }.onFailure { e ->
+                _state.value = _state.value.copy(
+                    error                   = e.message ?: "Error al cancelar la reserva",
+                    cancellingReservationId = null
                 )
             }
         }

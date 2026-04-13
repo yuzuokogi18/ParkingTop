@@ -43,4 +43,7 @@ interface ProfileRepository {
      * Obtiene el balance del propietario
      */
     suspend fun getOwnerBalance(): Result<OwnerBalanceDto>
+
+
+    suspend fun cancelReservation(reservationId: String): Result<Unit>
 }

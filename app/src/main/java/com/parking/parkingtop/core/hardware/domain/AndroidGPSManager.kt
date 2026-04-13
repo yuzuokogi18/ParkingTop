@@ -26,13 +26,18 @@ class AndroidGPSManager @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override suspend fun getLastLocation(): LocationData? {
-        val location = fusedLocationClient.lastLocation.await()
-
-        return location?.let {
-            LocationData(
-                latitude = it.latitude,
-                longitude = it.longitude
-            )
+        // Intenta lastLocation primero
+        val last = fusedLocationClient.lastLocation.await()
+        if (last != null) {
+            return LocationData(latitude = last.latitude, longitude = last.longitude)
         }
+
+        // Si es null, solicita una ubicación fresca
+        val request = com.google.android.gms.location.CurrentLocationRequest.Builder()
+            .setPriority(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY)
+            .build()
+
+        val fresh = fusedLocationClient.getCurrentLocation(request, null).await()
+        return fresh?.let { LocationData(latitude = it.latitude, longitude = it.longitude) }
     }
 }

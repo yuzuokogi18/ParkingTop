@@ -120,4 +120,20 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun cancelReservation(reservationId: String): Result<Unit> {
+        return try {
+            val response = api.cancelReservation(
+                token = getAuthToken(),
+                reservationId = reservationId,
+                reason = emptyMap()  // o mapOf("reason" to "Cancelado por el usuario")
+            )
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception(
+                response.body()?.error?.message ?: "Error al cancelar la reserva"
+            ))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
