@@ -27,6 +27,7 @@ import com.parking.parkingtop.features.login.presentation.screens.LoginScreen
 import com.parking.parkingtop.features.login.presentation.screens.WelcomeScreen
 import com.parking.parkingtop.features.register.presentation.screens.RegisterScreen
 import com.example.parkingtop.features.reservations.presentation.screens.ReservationScreen
+import com.parking.parkingtop.core.di.navigation.viewmodels.DeepLinkHandlerViewModel
 import com.parking.parkingtop.features.cliente.ReservaClient.presentation.screens.PaymentWebViewScreen
 import com.parking.parkingtop.features.notifications.presentation.screens.NotificationsScreen
 import com.parking.parkingtop.features.subscritionplan.screens.SubscriptionPlanScreen
@@ -39,8 +40,31 @@ import com.parking.parkingtop.features.propetario.misespaciospropetario.presenta
 
 @Composable
 fun AppNavigation() {
-
     val navController = rememberNavController()
+
+    // Obtenemos el handler a través del ViewModel delgado (Hilt-safe en Compose)
+    val deepLinkVm: DeepLinkHandlerViewModel = hiltViewModel()
+
+    // Colectamos eventos de deep-link.
+    // LaunchedEffect(navController) se re-lanza si el NavController cambia,
+    // pero en la práctica es estable durante toda la sesión.
+    LaunchedEffect(navController) {
+        deepLinkVm.handler.events.collect { event ->
+            when (event) {
+                is DeepLinkEvent.OpenReview -> {
+                    // Si el usuario aún no está logueado, la ruta simplemente
+                    // no existe en el back-stack y la navegación es silenciosa.
+                    navController.navigate(
+                        AppRoutes.review(
+                            parkingLotId  = event.parkingLotId,
+                            reservationId = event.reservationId,
+                            parkingName   = event.parkingName
+                        )
+                    )
+                }
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = AppRoutes.WELCOME) {
 
@@ -54,7 +78,7 @@ fun AppNavigation() {
         composable(AppRoutes.LOGIN) {
             LoginScreen(
                 onSubscription  = { navController.navigate(AppRoutes.SUBSCRIPTION) },
-                onHome          = { role -> 
+                onHome          = { role ->
                     val route = if (role == "owner") AppRoutes.HOME_OWNER else AppRoutes.BUSQUEDA
                     navController.navigate(route) {
                         popUpTo(AppRoutes.LOGIN) { inclusive = true }
@@ -63,16 +87,15 @@ fun AppNavigation() {
                 onRegisterClick = { navController.navigate(AppRoutes.REGISTER) }
             )
         }
+
         composable(AppRoutes.REGISTER) {
             RegisterScreen(
                 onSubscription = {
-                    // Owner → va a elegir plan de suscripción
                     navController.navigate(AppRoutes.SUBSCRIPTION) {
                         popUpTo(AppRoutes.REGISTER) { inclusive = true }
                     }
                 },
                 onHome = {
-                    // Customer → va directo al home
                     navController.navigate(AppRoutes.BUSQUEDA) {
                         popUpTo(AppRoutes.REGISTER) { inclusive = true }
                     }
@@ -90,46 +113,39 @@ fun AppNavigation() {
 
         composable(AppRoutes.HOME_OWNER) {
             HomePropetarioScreen(
-                onAddParkingClick = { navController.navigate(AppRoutes.CREATE_PARKING) },
-                onParkingClick = { parkingId ->
-                    navController.navigate(AppRoutes.parkingDetail(parkingId, isOwner = true))
-                },
-                onEditParkingClick = { parkingId ->
-                    navController.navigate(AppRoutes.editParking(parkingId))
-                },
+                onAddParkingClick   = { navController.navigate(AppRoutes.CREATE_PARKING) },
+                onParkingClick      = { id -> navController.navigate(AppRoutes.parkingDetail(id, true)) },
+                onEditParkingClick  = { id -> navController.navigate(AppRoutes.editParking(id)) },
                 onReservationsClick = { navController.navigate("owner_reservations") },
                 onAvailabilityClick = { navController.navigate("owner_availability") },
-                onMySpacesClick = { navController.navigate(AppRoutes.MY_SPACES) },
-                onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
+                onMySpacesClick     = { navController.navigate(AppRoutes.MY_SPACES) },
+                onProfileClick      = { navController.navigate(AppRoutes.PERFIL) }
             )
         }
 
         composable(AppRoutes.CREATE_PARKING) {
             CreateParkingScreen(
                 onBackClick = { navController.popBackStack() },
-                onSuccess = { navController.popBackStack() }
+                onSuccess   = { navController.popBackStack() }
             )
         }
 
         composable(
             route = AppRoutes.EDIT_PARKING,
             arguments = listOf(navArgument("parkingId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val parkingId = backStackEntry.arguments?.getString("parkingId") ?: ""
+        ) {
             UpdateParkingScreen(
-                parkingId = parkingId,
+                parkingId   = it.arguments?.getString("parkingId") ?: "",
                 onBackClick = { navController.popBackStack() },
-                onSuccess = { navController.popBackStack() }
+                onSuccess   = { navController.popBackStack() }
             )
         }
 
         composable(AppRoutes.BUSQUEDA) {
             BusquedaClientScreen(
-                onHomeClick    = { /* ya estás aquí */ },
+                onHomeClick    = { },
                 onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
-                onParkingClick = { parkingId ->
-                    navController.navigate(AppRoutes.parkingDetail(parkingId, isOwner = false))
-                }
+                onParkingClick = { id -> navController.navigate(AppRoutes.parkingDetail(id, false)) }
             )
         }
 
@@ -139,30 +155,23 @@ fun AppNavigation() {
                 navArgument("parkingId") { type = NavType.StringType },
                 navArgument("isOwner")   { type = NavType.BoolType; defaultValue = false }
             )
-        ) { backStackEntry ->
-            val parkingId = backStackEntry.arguments?.getString("parkingId") ?: ""
-            val isOwner   = backStackEntry.arguments?.getBoolean("isOwner") ?: false
+        ) { back ->
+            val parkingId = back.arguments?.getString("parkingId") ?: ""
             DetalleEstacionamientoScreen(
                 parkingId      = parkingId,
-                isOwner        = isOwner,
+                isOwner        = back.arguments?.getBoolean("isOwner") ?: false,
                 onBackClick    = { navController.popBackStack() },
-                // ✅ Usa AppRoutes.reserva() que genera "reserva/{parkingId}"
                 onReserveClick = { navController.navigate(AppRoutes.reserva(parkingId)) }
             )
         }
 
-
         composable(
-            route = AppRoutes.RESERVA,   // "reserva/{parkingIdClient}"
-            arguments = listOf(
-                navArgument("parkingIdClient") { type = NavType.StringType }
-            )
+            route = AppRoutes.RESERVA,
+            arguments = listOf(navArgument("parkingIdClient") { type = NavType.StringType })
         ) {
             ReservationScreen(
-                onBack = { navController.popBackStack() },
-                onPaymentSuccess = { paymentUrl ->
-                    navController.navigate(AppRoutes.paymentWebView(paymentUrl))
-                },
+                onBack            = { navController.popBackStack() },
+                onPaymentSuccess  = { url -> navController.navigate(AppRoutes.paymentWebView(url)) },
                 onCashReservation = {
                     navController.navigate(AppRoutes.HOME_CLIENT) {
                         popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
@@ -171,49 +180,34 @@ fun AppNavigation() {
             )
         }
 
-        composable(AppRoutes.PERFIL) { backStackEntry ->
+        composable(AppRoutes.PERFIL) { back ->
+            val vm: ProfileViewModel = hiltViewModel(back)
+            val shouldRefresh = back.savedStateHandle.get<Boolean>("profile_needs_refresh")
 
-            val profileViewModel: ProfileViewModel = hiltViewModel(backStackEntry)
-
-            val refreshKey = backStackEntry.savedStateHandle
-                .get<Boolean>("profile_needs_refresh")
-
-            LaunchedEffect(refreshKey) {
-                if (refreshKey == true) {
-                    profileViewModel.loadProfileData()
-                    backStackEntry.savedStateHandle
-                        .remove<Boolean>("profile_needs_refresh")
+            LaunchedEffect(shouldRefresh) {
+                if (shouldRefresh == true) {
+                    vm.loadProfileData()
+                    back.savedStateHandle.remove<Boolean>("profile_needs_refresh")
                 }
             }
-
             ProfileClientScreen(
                 onHomeClick          = { navController.navigate(AppRoutes.HOME_CLIENT) },
                 onSearchClick        = { navController.navigate(AppRoutes.BUSQUEDA) },
                 onAddVehicleClick    = { navController.navigate(AppRoutes.CREATE_VEHICLE) },
-                onEditVehicleClick   = { vehicle ->
+                onEditVehicleClick   = { v ->
                     navController.navigate(
-                        AppRoutes.editVehicle(
-                            vehicleId    = vehicle.id,
-                            licensePlate = vehicle.licensePlate,
-                            brand        = vehicle.brand ?: "",
-                            model        = vehicle.model ?: "",
-                            color        = vehicle.color ?: "",
-                            isDefault    = vehicle.isDefault
-                        )
+                        AppRoutes.editVehicle(v.id, v.licensePlate, v.brand ?: "", v.model ?: "", v.color ?: "", v.isDefault)
                     )
                 },
-                onEditProfileClick   = { name, phone, imageUrl ->
-                    navController.navigate(AppRoutes.updateProfile(name, phone, imageUrl))
-                },
+                onEditProfileClick   = { n, p, i -> navController.navigate(AppRoutes.updateProfile(n, p, i)) },
                 onNotificationsClick = { navController.navigate(AppRoutes.NOTIFICATIONS) },
-                // ✅ Configuración para PROPIETARIO desde su perfil
                 onDashboardClick     = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onReservationsClick  = { navController.navigate("owner_reservations") },
                 onAvailabilityClick  = { navController.navigate("owner_availability") },
                 onMySpacesClick      = { navController.navigate(AppRoutes.MY_SPACES) },
                 onTransferClick      = { navController.navigate(AppRoutes.REQUEST_PAYOUT) },
                 onPayoutHistoryClick = { navController.navigate(AppRoutes.PAYOUT_HISTORY) },
-                viewModel            = profileViewModel
+                viewModel            = vm
             )
         }
 
@@ -221,9 +215,7 @@ fun AppNavigation() {
             CreateVehicleScreen(
                 onBack    = { navController.popBackStack() },
                 onSuccess = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("profile_needs_refresh", true)
+                    navController.previousBackStackEntry?.savedStateHandle?.set("profile_needs_refresh", true)
                     navController.popBackStack()
                 }
             )
@@ -239,20 +231,18 @@ fun AppNavigation() {
                 navArgument("color")        { type = NavType.StringType },
                 navArgument("isDefault")    { type = NavType.BoolType  }
             )
-        ) { backStackEntry ->
-            val args = backStackEntry.arguments!!
+        ) { back ->
+            val a = back.arguments!!
             EditVehicleScreen(
-                vehicleId    = args.getString("vehicleId")!!,
-                licensePlate = args.getString("licensePlate")!!,
-                brand        = args.getString("brand")!!,
-                model        = args.getString("model")!!,
-                color        = args.getString("color")!!,
-                isDefault    = args.getBoolean("isDefault"),
+                vehicleId    = a.getString("vehicleId")!!,
+                licensePlate = a.getString("licensePlate")!!,
+                brand        = a.getString("brand")!!,
+                model        = a.getString("model")!!,
+                color        = a.getString("color")!!,
+                isDefault    = a.getBoolean("isDefault"),
                 onBack       = { navController.popBackStack() },
                 onSuccess    = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("profile_needs_refresh", true)
+                    navController.previousBackStackEntry?.savedStateHandle?.set("profile_needs_refresh", true)
                     navController.popBackStack()
                 }
             )
@@ -265,70 +255,65 @@ fun AppNavigation() {
                 navArgument("phone")    { type = NavType.StringType },
                 navArgument("imageUrl") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val args = backStackEntry.arguments!!
+        ) { back ->
+            val a = back.arguments!!
             UpdateProfileScreen(
-                currentName  = Uri.decode(args.getString("name")!!),
-                currentPhone = Uri.decode(args.getString("phone")!!).ifBlank { null },
-                currentImage = Uri.decode(args.getString("imageUrl")!!).ifBlank { null },
+                currentName  = Uri.decode(a.getString("name")!!),
+                currentPhone = Uri.decode(a.getString("phone")!!).ifBlank { null },
+                currentImage = Uri.decode(a.getString("imageUrl")!!).ifBlank { null },
                 onBack       = { navController.popBackStack() },
                 onSuccess    = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("profile_needs_refresh", true)
+                    navController.previousBackStackEntry?.savedStateHandle?.set("profile_needs_refresh", true)
                     navController.popBackStack()
                 }
             )
         }
 
         composable(AppRoutes.NOTIFICATIONS) {
-            NotificationsScreen(
-                onBack = { navController.popBackStack() }
-            )
+            NotificationsScreen(onBack = { navController.popBackStack() })
         }
-        
+
         composable("owner_reservations") {
             ReservationOwnerScreen(
-                onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onDashboardClick    = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onAvailabilityClick = { navController.navigate("owner_availability") },
-                onMySpacesClick = { navController.navigate(AppRoutes.MY_SPACES) },
-                onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
+                onMySpacesClick     = { navController.navigate(AppRoutes.MY_SPACES) },
+                onProfileClick      = { navController.navigate(AppRoutes.PERFIL) }
             )
         }
-        
+
         composable("owner_availability") {
             AvailabilityScreen(
-                onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onDashboardClick    = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onReservationsClick = { navController.navigate("owner_reservations") },
-                onMySpacesClick = { navController.navigate(AppRoutes.MY_SPACES) },
-                onProfileClick = { navController.navigate(AppRoutes.PERFIL) }
+                onMySpacesClick     = { navController.navigate(AppRoutes.MY_SPACES) },
+                onProfileClick      = { navController.navigate(AppRoutes.PERFIL) }
             )
         }
 
         composable(AppRoutes.MY_SPACES) {
             MySpacesScreen(
-                onDashboardClick = { navController.navigate(AppRoutes.HOME_OWNER) },
+                onDashboardClick    = { navController.navigate(AppRoutes.HOME_OWNER) },
                 onReservationsClick = { navController.navigate("owner_reservations") },
                 onAvailabilityClick = { navController.navigate("owner_availability") },
-                onProfileClick = { navController.navigate(AppRoutes.PERFIL) },
-                onSpotClick = { /* TODO: Navegar al detalle del espacio */ }
+                onProfileClick      = { navController.navigate(AppRoutes.PERFIL) },
+                onSpotClick         = { }
             )
         }
-        
+
         composable(AppRoutes.PAYOUT_HISTORY) {
-            // TODO: Implementar pantalla de historial de pagos
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Historial de Ganancias (Próximamente)")
             }
         }
-        
+
         composable(AppRoutes.REQUEST_PAYOUT) {
-            // TODO: Implementar pantalla de solicitud de retiro
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Transferir a mi Cuenta (Próximamente)")
             }
         }
 
+        // ── Review ────────────────────────────────────────────────────────────
         composable(
             route = AppRoutes.REVIEW,
             arguments = listOf(
@@ -336,14 +321,25 @@ fun AppNavigation() {
                 navArgument("reservationId") { type = NavType.StringType },
                 navArgument("parkingName")   { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val args = backStackEntry.arguments!!
+        ) { back ->
+            val parkingLotId  = back.arguments?.getString("parkingLotId").orEmpty()
+            val reservationId = back.arguments?.getString("reservationId").orEmpty()
+            val parkingName   = Uri.decode(back.arguments?.getString("parkingName").orEmpty())
+
+            if (parkingLotId.isBlank() || reservationId.isBlank()) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(AppRoutes.HOME_CLIENT) {
+                        popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
+                    }
+                }
+                return@composable
+            }
+
             ReviewScreen(
-                parkingLotId  = args.getString("parkingLotId")!!,
-                reservationId = args.getString("reservationId")!!,
-                parkingName   = Uri.decode(args.getString("parkingName")!!),
+                parkingLotId  = parkingLotId,
+                reservationId = reservationId,
+                parkingName   = parkingName,
                 onSuccess     = {
-                    // Vuelve al home después de calificar
                     navController.navigate(AppRoutes.HOME_CLIENT) {
                         popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
                     }
@@ -359,8 +355,8 @@ fun AppNavigation() {
         composable(
             route = AppRoutes.PAYMENT_WEBVIEW,
             arguments = listOf(navArgument("url") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val url = Uri.decode(backStackEntry.arguments?.getString("url") ?: "")
+        ) { back ->
+            val url = Uri.decode(back.arguments?.getString("url") ?: "")
             PaymentWebViewScreen(
                 paymentUrl       = url,
                 onPaymentSuccess = {
@@ -368,10 +364,7 @@ fun AppNavigation() {
                         popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
                     }
                 },
-                onPaymentFailure = {
-                    navController.popBackStack()
-                    navController.popBackStack() // sale también del ReservationScreen
-                },
+                onPaymentFailure = { navController.popBackStack(); navController.popBackStack() },
                 onPaymentPending = {
                     navController.navigate(AppRoutes.HOME_CLIENT) {
                         popUpTo(AppRoutes.HOME_CLIENT) { inclusive = false }
@@ -381,13 +374,11 @@ fun AppNavigation() {
             )
         }
 
-        composable("subscription/{status}") { backStackEntry ->
-            val status = backStackEntry.arguments?.getString("status") ?: "success"
+        composable("subscription/{status}") { back ->
+            val status = back.arguments?.getString("status") ?: "success"
             LaunchedEffect(Unit) {
                 if (status == "approved" || status == "success") {
-                    navController.navigate(AppRoutes.HOME_OWNER) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    navController.navigate(AppRoutes.HOME_OWNER) { popUpTo(0) { inclusive = true } }
                 } else {
                     navController.navigate(AppRoutes.SUBSCRIPTION) {
                         popUpTo(AppRoutes.SUBSCRIPTION) { inclusive = false }

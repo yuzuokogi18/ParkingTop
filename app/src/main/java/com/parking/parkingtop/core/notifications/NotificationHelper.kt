@@ -29,8 +29,8 @@ class NotificationHelper @Inject constructor(
         // Intent que abre la app con los datos del deep link
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("type", type)
             deepLinkData.forEach { (k, v) -> putExtra(k, v) }
-            putExtra("notification_type", type)
         }
 
         val pendingIntent = PendingIntent.getActivity(

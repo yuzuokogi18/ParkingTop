@@ -5,9 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.parking.parkingtop.features.propetario.reservationpropetario.domain.entities.ReservationOwner
-import com.parking.parkingtop.features.propetario.reservationpropetario.domain.entities.ReservationStatus
+import com.parking.parkingtop.features.propetario.reservationpropetario.domain.usecases.CheckInReservationUseCase
+import com.parking.parkingtop.features.propetario.reservationpropetario.domain.usecases.CheckOutReservationUseCase
+import com.parking.parkingtop.features.propetario.reservationpropetario.domain.usecases.ConfirmCashPaymentUseCase
 import com.parking.parkingtop.features.propetario.reservationpropetario.domain.usecases.GetOwnerReservationsUseCase
-import com.parking.parkingtop.features.propetario.reservationpropetario.domain.usecases.UpdateReservationStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,7 +23,9 @@ data class ReservationOwnerState(
 @HiltViewModel
 class ReservationOwnerViewModel @Inject constructor(
     private val getOwnerReservationsUseCase: GetOwnerReservationsUseCase,
-    private val updateReservationStatusUseCase: UpdateReservationStatusUseCase
+    private val confirmCashPaymentUseCase: ConfirmCashPaymentUseCase,
+    private val checkInUseCase: CheckInReservationUseCase,
+    private val checkOutUseCase: CheckOutReservationUseCase
 ) : ViewModel() {
 
     private val _state = mutableStateOf(ReservationOwnerState())
@@ -35,15 +38,15 @@ class ReservationOwnerViewModel @Inject constructor(
     fun loadReservations(filter: String = _state.value.selectedFilter) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, selectedFilter = filter)
-            
+
             val statusParam = when (filter) {
-                "Pendientes" -> "pending"
+                "Pendientes"  -> "pending"
                 "Confirmadas" -> "confirmed"
-                "Canceladas" -> "cancelled"
-                else -> null
+                "Canceladas"  -> "cancelled"
+                else          -> null
             }
 
-            getOwnerReservationsUseCase(statusParam).fold(
+            getOwnerReservationsUseCase(status = statusParam).fold(
                 onSuccess = { reservations ->
                     _state.value = _state.value.copy(isLoading = false, reservations = reservations)
                 },
@@ -54,14 +57,35 @@ class ReservationOwnerViewModel @Inject constructor(
         }
     }
 
-    fun updateStatus(id: String, status: ReservationStatus) {
+    fun confirmCashPayment(id: String) {
         viewModelScope.launch {
-            updateReservationStatusUseCase(id, status).fold(
-                onSuccess = {
-                    loadReservations()
-                },
+            confirmCashPaymentUseCase(id).fold(
+                onSuccess = { loadReservations() },
                 onFailure = { error ->
                     _state.value = _state.value.copy(error = error.message)
+                }
+            )
+        }
+    }
+
+
+    fun checkIn(id: String) {
+        viewModelScope.launch {
+            checkInUseCase(id).fold(
+                onSuccess = { loadReservations() },
+                onFailure = {
+                    _state.value = _state.value.copy(error = it.message)
+                }
+            )
+        }
+    }
+
+    fun checkOut(id: String) {
+        viewModelScope.launch {
+            checkOutUseCase(id).fold(
+                onSuccess = { loadReservations() },
+                onFailure = {
+                    _state.value = _state.value.copy(error = it.message)
                 }
             )
         }

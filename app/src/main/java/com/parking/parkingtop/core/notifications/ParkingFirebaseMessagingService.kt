@@ -24,17 +24,24 @@ class ParkingFirebaseMessagingService : FirebaseMessagingService() {
 
     // ── Mensaje recibido ──────────────────────────────────────────────────────
     override fun onMessageReceived(message: RemoteMessage) {
-        val title   = message.notification?.title ?: message.data["title"] ?: return
-        val body    = message.notification?.body  ?: message.data["body"]  ?: return
-        val type    = message.data["type"] ?: "general"
-        val deepData = message.data.filterKeys { it != "type" && it != "title" && it != "body" }
+        val data = message.data
 
-        // Muestra la notificación local (funciona en foreground y background)
+        val title = message.notification?.title
+            ?: data["title"]
+            ?: "Notificación"
+
+        val body = message.notification?.body
+            ?: data["body"]
+            ?: ""
+
+        val type = data["type"] ?: "general"
+
+        // Importante: mandar TODO el data, incluido type
         notificationHelper.show(
-            title        = title,
-            message      = body,
-            type         = type,
-            deepLinkData = deepData
+            title = title,
+            message = body,
+            type = type,
+            deepLinkData = data
         )
     }
 
