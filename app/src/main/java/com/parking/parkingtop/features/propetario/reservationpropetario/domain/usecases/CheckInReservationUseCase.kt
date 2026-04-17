@@ -4,14 +4,10 @@ import com.parking.parkingtop.features.propetario.reservationpropetario.domain.e
 import com.parking.parkingtop.features.propetario.reservationpropetario.domain.repositories.ReservationOwnerRepository
 import javax.inject.Inject
 
-class GetOwnerReservationsUseCase @Inject constructor(
+class CheckInReservationUseCase @Inject constructor(
     private val repository: ReservationOwnerRepository
 ) {
-    suspend operator fun invoke(
-        status: String? = null,
-        startDate: String? = null,
-        endDate: String? = null
-    ): Result<List<ReservationOwner>> {
-        return repository.getReservations(status, startDate, endDate)
+    suspend operator fun invoke(id: String): Result<ReservationOwner> {
+        return repository.checkIn(id)
     }
 }

@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.sp
 import com.parking.parkingtop.features.cliente.Perfil.presentation.domain.entities.Reservation
 import com.parking.parkingtop.ui.theme.BlueSecondary
 import com.parking.parkingtop.ui.theme.TextPrimary
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ReservationProfileCard(
@@ -129,7 +132,7 @@ fun ReservationProfileCard(
             // Fecha rápida siempre visible
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                reservation.startTime.take(10),
+                formatDateTime(reservation.startTime),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
@@ -145,8 +148,8 @@ fun ReservationProfileCard(
                     HorizontalDivider(color = Color(0xFFEEEEEE))
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    DetailRow(label = "Inicio",   value = reservation.startTime)
-                    DetailRow(label = "Fin",      value = reservation.endTime)
+                    DetailRow(label = "Inicio",   value = formatDateTime(reservation.startTime))
+                    DetailRow(label = "Fin",      value = formatDateTime(reservation.endTime))
                     DetailRow(label = "Total",    value = "$${reservation.totalCost}")
 
                     // ── Botón cancelar — solo para reservas activas/pendientes/confirmadas
@@ -203,5 +206,22 @@ private fun DetailRow(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
         Text(value, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold), color = TextPrimary)
+    }
+}
+
+fun formatDateTime(dateTime: String): String {
+    return try {
+        val inputFormatter = DateTimeFormatter.ISO_DATE_TIME
+        val outputFormatter = DateTimeFormatter.ofPattern("hh:mm a")
+
+        // Parsear como ZonedDateTime (detecta zona si viene en el string)
+        val zonedDateTime = ZonedDateTime.parse(dateTime, inputFormatter)
+
+        // Convertir a zona horaria de México
+        val mexicoTime = zonedDateTime.withZoneSameInstant(ZoneId.of("America/Mexico_City"))
+
+        mexicoTime.format(outputFormatter)
+    } catch (e: Exception) {
+        dateTime
     }
 }

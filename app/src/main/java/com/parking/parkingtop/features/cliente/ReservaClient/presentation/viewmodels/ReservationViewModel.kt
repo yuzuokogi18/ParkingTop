@@ -19,10 +19,16 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.ceil
+
+
+private val mexicoZone = ZoneId.of("America/Mexico_City")
 
 data class ReservationState(
     val parkingLot: ParkingLot?         = null,
@@ -31,28 +37,29 @@ data class ReservationState(
     val spots: List<ParkingSpot>        = emptyList(),
     val selectedSpot: ParkingSpot?      = null,
 
-    val entryDate: LocalDate  = LocalDate.now(),
+        val entryDate: LocalDate  = LocalDate.now(),
     val entryTime: LocalTime  = LocalTime.now(),
     val exitDate: LocalDate   = LocalDate.now(),
     val exitTime: LocalTime   = LocalTime.now().plusHours(2),
 
+    // ✅ Ahora hours y minutes separados para mostrar en UI
     val hours: Int             = 0,
+    val minutes: Int           = 0,    // minutos sobrantes (ej: 1h 30m → hours=1, minutes=30)
     val baseCost: Double       = 0.0,
     val additionalTime: Double = 0.0,
     val discounts: Double      = 0.0,
     val total: Double          = 0.0,
 
-    val selectedPaymentMethod: String  = "mercadopago",  // mercadopago | cash
+    val selectedPaymentMethod: String  = "mercadopago",
 
     val isLoading: Boolean         = false,
     val isLoadingVehicles: Boolean = false,
     val isLoadingSpots: Boolean    = false,
     val error: String?             = null,
 
-    // Resultado final de la reserva
     val reservationResult: ReservationResult? = null,
     val reservationSuccess: Boolean           = false,
-    val paymentUrl: String?                   = null   // para compatibilidad con la UI existente
+    val paymentUrl: String?                   = null
 )
 
 @HiltViewModel
@@ -161,24 +168,49 @@ class ReservationViewModel @Inject constructor(
     fun updateEntryDate(date: LocalDate) { _state.value = _state.value.copy(entryDate = date); calculatePrice() }
     fun updateEntryTime(time: LocalTime) { _state.value = _state.value.copy(entryTime = time); calculatePrice() }
     fun updateExitDate(date: LocalDate)  { _state.value = _state.value.copy(exitDate  = date); calculatePrice() }
-    fun updateExitTime(time: LocalTime)  { _state.value = _state.value.copy(exitTime  = time); calculatePrice() }
+    fun updateExitTime(time: LocalTime) {
+        val entry = LocalDateTime.of(_state.value.entryDate, _state.value.entryTime)
+        var exit  = LocalDateTime.of(_state.value.exitDate, time)
+
+        if (exit <= entry) {
+            exit = exit.plusDays(1) // 👈 clave
+        }
+
+        _state.value = _state.value.copy(
+            exitDate = exit.toLocalDate(),
+            exitTime = exit.toLocalTime()
+        )
+
+        calculatePrice()
+    }
 
     private fun calculatePrice() {
         val entry   = LocalDateTime.of(_state.value.entryDate, _state.value.entryTime)
         val exit    = LocalDateTime.of(_state.value.exitDate,  _state.value.exitTime)
-        val minutes = ChronoUnit.MINUTES.between(entry, exit)
+        val totalMinutes = ChronoUnit.MINUTES.between(entry, exit)
 
-        if (minutes <= 0) {
-            _state.value = _state.value.copy(hours = 0, baseCost = 0.0, total = 0.0)
+        if (totalMinutes <= 0) {
+            _state.value = _state.value.copy(
+                hours    = 0,
+                minutes  = 0,
+                baseCost = 0.0,
+                total    = 0.0
+            )
             return
         }
 
-        val hours        = ceil(minutes / 60.0).toInt()
-        val pricePerHour = _state.value.parkingLot?.basePricePerHour ?: 20.0
-        val baseCost     = hours * pricePerHour
+        val pricePerHour   = _state.value.parkingLot?.basePricePerHour ?: 20.0
+        val pricePerMinute = pricePerHour / 60.0
+
+        // ✅ Cobra exactamente por los minutos seleccionados (sin redondear a hora completa)
+        val baseCost = totalMinutes * pricePerMinute
+
+        val displayHours   = (totalMinutes / 60).toInt()
+        val displayMinutes = (totalMinutes % 60).toInt()
 
         _state.value = _state.value.copy(
-            hours    = hours,
+            hours    = displayHours,
+            minutes  = displayMinutes,
             baseCost = baseCost,
             total    = baseCost
         )
@@ -192,35 +224,50 @@ class ReservationViewModel @Inject constructor(
             _state.value = s.copy(error = "Selecciona un vehículo")
             return
         }
-        if (s.total <= 0) {
-            _state.value = s.copy(error = "El tiempo de reserva debe ser mayor a 0")
+
+        val entry        = LocalDateTime.of(s.entryDate, s.entryTime)
+        val exit         = LocalDateTime.of(s.exitDate,  s.exitTime)
+        val totalMinutes = ChronoUnit.MINUTES.between(entry, exit)
+
+        if (totalMinutes <= 0) {
+            _state.value = s.copy(error = "La hora de salida debe ser posterior a la entrada")
             return
         }
 
-        val entryIso = LocalDateTime.of(s.entryDate, s.entryTime)
-            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
-        val exitIso  = LocalDateTime.of(s.exitDate, s.exitTime)
-            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
+        // ✅ Mínimo 15 minutos (opcional — descomenta si lo necesitas)
+        // if (totalMinutes < 15) {
+        //     _state.value = s.copy(error = "La reserva mínima es de 15 minutos")
+        //     return
+        // }
+
+        val mxZone   = ZoneId.of("America/Mexico_City")
+        val entryZdt = ZonedDateTime.of(s.entryDate, s.entryTime, mxZone)
+        val exitZdt  = ZonedDateTime.of(s.exitDate,  s.exitTime,  mxZone)
+
+        val entryIso = entryZdt.withZoneSameInstant(ZoneId.of("UTC"))
+            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        val exitIso  = exitZdt.withZoneSameInstant(ZoneId.of("UTC"))
+            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
 
             val request = CreateReservationRequest(
-                parkingLotId = parkingId,
+                parkingLotId  = parkingId,
                 parkingSpotId = s.selectedSpot?.id,
-                vehicleId = s.selectedVehicle.id,
-                startTime = entryIso,
-                endTime = exitIso,
+                vehicleId     = s.selectedVehicle.id,
+                startTime     = entryIso,
+                endTime       = exitIso,
                 paymentMethod = s.selectedPaymentMethod
             )
 
             createReservationUseCase.execute(request).fold(
                 onSuccess = { result ->
                     _state.value = _state.value.copy(
-                        isLoading         = false,
-                        reservationResult = result,
+                        isLoading          = false,
+                        reservationResult  = result,
                         reservationSuccess = true,
-                        paymentUrl        = result.paymentUrl   // null si es efectivo
+                        paymentUrl         = result.paymentUrl
                     )
                 },
                 onFailure = { e ->
@@ -238,6 +285,9 @@ class ReservationViewModel @Inject constructor(
 
     fun getFormattedEntryDate() = _state.value.entryDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
     fun getFormattedExitDate()  = _state.value.exitDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-    fun getFormattedEntryTime() = _state.value.entryTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-    fun getFormattedExitTime()  = _state.value.exitTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+    fun getFormattedEntryTime() = _state.value.entryTime
+        .format(DateTimeFormatter.ofPattern("hh:mm a", Locale("es", "MX")))
+
+    fun getFormattedExitTime() = _state.value.exitTime
+        .format(DateTimeFormatter.ofPattern("hh:mm a", Locale("es", "MX")))
 }

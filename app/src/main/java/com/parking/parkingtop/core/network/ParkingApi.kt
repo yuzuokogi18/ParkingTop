@@ -29,6 +29,9 @@ import com.parking.parkingtop.features.propetario.misespaciospropetario.data.dat
 import com.parking.parkingtop.features.propetario.misespaciospropetario.data.datasources.models.DeleteMessageDto
 import com.parking.parkingtop.features.propetario.misespaciospropetario.data.datasources.models.ParkingSpotDto
 import com.parking.parkingtop.features.propetario.misespaciospropetario.data.datasources.models.UpdateParkingSpotRequest
+import com.parking.parkingtop.features.propetario.reservationpropetario.data.datasources.models.CheckInCheckOutResponse
+import com.parking.parkingtop.features.propetario.reservationpropetario.data.datasources.models.ConfirmCashPaymentDto
+import com.parking.parkingtop.features.propetario.reservationpropetario.data.datasources.models.ReservationDto
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -207,8 +210,19 @@ interface ParkingApi {
     @GET("v1/parkings/owner/my-parkings")
     suspend fun getOwnerParkings(@Header("Authorization") token: String): Response<ApiResponse<List<OwnerParkingDto>>>
 
-    @GET("v1/owner/reservations")
-    suspend fun getOwnerReservations(@Header("Authorization") token: String, @Query("status") status: String? = null): Response<ApiResponse<List<ReservationOwnerDto>>>
+    @GET("v1/reservations/owner")
+    suspend fun getOwnerReservations(
+        @Header("Authorization") token: String,
+        @Query("status") status: String? = null,
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): Response<ApiResponse<List<ReservationDto>>>
+
+    @PUT("v1/reservations/{id}/confirm-cash-payment")
+    suspend fun confirmCashPayment(
+        @Header("Authorization") token: String,
+        @Path("id") reservationId: String
+    ): Response<ApiResponse<ConfirmCashPaymentDto>>
 
     @PATCH("v1/owner/reservations/{id}/status")
     suspend fun updateReservationStatus(@Header("Authorization") token: String, @Path("id") reservationId: String, @Body status: Map<String, String>): Response<ApiResponse<Unit>>
@@ -366,4 +380,22 @@ interface ParkingApi {
         @Header("Authorization") token: String,
         @Body body: Map<String, String>   // ← Map<String, String>
     ): Response<ApiResponse<Unit>>
+
+    //check-in, check-out
+
+    @PUT("v1/reservations/{id}/check-in")
+    suspend fun checkIn(
+        @Header("Authorization") token: String,
+        @Path("id") reservationId: String
+    ): Response<CheckInCheckOutResponse>
+
+    /**
+     * Check-out de una reserva
+     * PUT /v1/reservations/:id/check-out
+     */
+    @PUT("v1/reservations/{id}/check-out")
+    suspend fun checkOut(
+        @Header("Authorization") token: String,
+        @Path("id") reservationId: String
+    ): Response<CheckInCheckOutResponse>
 }

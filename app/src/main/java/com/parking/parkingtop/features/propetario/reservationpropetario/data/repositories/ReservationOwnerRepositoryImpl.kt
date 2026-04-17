@@ -4,7 +4,6 @@ import com.parking.parkingtop.core.datastore.TokenDataStore
 import com.parking.parkingtop.core.network.ParkingApi
 import com.parking.parkingtop.features.propetario.reservationpropetario.data.datasources.mapper.toDomain
 import com.parking.parkingtop.features.propetario.reservationpropetario.domain.entities.ReservationOwner
-import com.parking.parkingtop.features.propetario.reservationpropetario.domain.entities.ReservationStatus
 import com.parking.parkingtop.features.propetario.reservationpropetario.domain.repositories.ReservationOwnerRepository
 import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
@@ -14,10 +13,21 @@ class ReservationOwnerRepositoryImpl @Inject constructor(
     private val tokenDataStore: TokenDataStore
 ) : ReservationOwnerRepository {
 
-    override suspend fun getReservations(status: String?): Result<List<ReservationOwner>> {
+    private suspend fun bearerToken(): String =
+        "Bearer ${tokenDataStore.accessToken.firstOrNull().orEmpty()}"
+
+    override suspend fun getReservations(
+        status: String?,
+        startDate: String?,
+        endDate: String?
+    ): Result<List<ReservationOwner>> {
         return try {
-            val token = tokenDataStore.accessToken.firstOrNull() ?: ""
-            val response = api.getOwnerReservations("Bearer $token", status)
+            val response = api.getOwnerReservations(
+                token = bearerToken(),
+                status = status,
+                startDate = startDate,
+                endDate = endDate
+            )
             if (response.isSuccessful) {
                 val data = response.body()?.data?.map { it.toDomain() } ?: emptyList()
                 Result.success(data)
@@ -29,13 +39,45 @@ class ReservationOwnerRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateStatus(id: String, status: ReservationStatus): Result<Unit> {
+    override suspend fun confirmCashPayment(id: String): Result<Unit> {
         return try {
-            val token = tokenDataStore.accessToken.firstOrNull() ?: ""
-            val statusString = status.name.lowercase()
-            val response = api.updateReservationStatus("Bearer $token", id, mapOf("status" to statusString))
+            val response = api.confirmCashPayment(
+                token = bearerToken(),
+                reservationId = id
+            )
             if (response.isSuccessful) {
                 Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    override suspend fun checkIn(id: String): Result<ReservationOwner> {
+        return try {
+            val response = api.checkIn(token = bearerToken(),id)
+
+            if (response.isSuccessful) {
+                val reservation = response.body()?.toDomain()
+                Result.success(reservation!!)
+            } else {
+                Result.failure(Exception(response.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun checkOut(id: String): Result<ReservationOwner> {
+        return try {
+            val response = api.checkOut(token = bearerToken(),id)
+
+            if (response.isSuccessful) {
+                val reservation = response.body()?.toDomain()
+                Result.success(reservation!!)
             } else {
                 Result.failure(Exception(response.message()))
             }

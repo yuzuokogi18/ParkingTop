@@ -218,6 +218,7 @@ fun ReservationScreen(
 
                 PriceSummaryCard(
                     hours          = state.hours,
+                    minutes = state.minutes,
                     baseCost       = state.baseCost,
                     additionalTime = state.additionalTime,
                     discounts      = state.discounts,
@@ -302,7 +303,7 @@ fun ReservationScreen(
             },
             state.entryTime.hour,
             state.entryTime.minute,
-            true
+            false  // ← era true, ahora false = modo 12h con AM/PM
         ).show()
     }
 
@@ -315,7 +316,7 @@ fun ReservationScreen(
             },
             state.exitTime.hour,
             state.exitTime.minute,
-            true
+            false  // ← era true, ahora false
         ).show()
     }
 }

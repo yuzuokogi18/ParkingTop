@@ -8,12 +8,17 @@ data class ReservationOwner(
     val startTime: String,
     val endTime: String,
     val price: Double,
-    val status: ReservationStatus
+    val status: ReservationStatus,
+    val paymentMethod: String? = null,   // "cash" | "card" | null
+    val checkInTime: String? = null,
+    val actualExitTime: String? = null
 )
 
 enum class ReservationStatus {
     PENDING,
     CONFIRMED,
+
+    ACTIVE, // 🔥 o crea ACTIVE si quieres más fino
     CANCELLED,
     COMPLETED
 }

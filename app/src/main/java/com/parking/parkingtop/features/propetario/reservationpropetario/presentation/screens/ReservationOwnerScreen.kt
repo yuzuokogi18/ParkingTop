@@ -21,7 +21,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.parking.parkingtop.features.propetario.reservationpropetario.domain.entities.ReservationStatus
 import com.parking.parkingtop.features.propetario.reservationpropetario.presentation.components.ReservationOwnerCard
 import com.parking.parkingtop.features.propetario.reservationpropetario.presentation.viewmodels.ReservationOwnerViewModel
 import com.parking.parkingtop.ui.theme.BlueSecondary
@@ -41,8 +40,16 @@ fun ReservationOwnerScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Gestionar Reservas", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                title = {
+                    Text(
+                        "Gestionar Reservas",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         bottomBar = {
@@ -56,7 +63,7 @@ fun ReservationOwnerScreen(
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
                     )
                     NavigationBarItem(
-                        selected = true, onClick = { },
+                        selected = true, onClick = {},
                         icon = { Icon(Icons.Default.List, null) },
                         label = { Text("Reservas", fontSize = 9.sp) },
                         colors = NavigationBarItemDefaults.colors(
@@ -94,7 +101,9 @@ fun ReservationOwnerScreen(
                 .background(Color(0xFFFDFDFD))
         ) {
             LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(filters) { filter ->
@@ -113,47 +122,75 @@ fun ReservationOwnerScreen(
                 }
             }
 
-            if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BlueSecondary)
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = BlueSecondary)
+                    }
                 }
-            } else if (state.reservations.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-                        Box(modifier = Modifier.size(80.dp).clip(CircleShape).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.EventBusy, null, modifier = Modifier.size(40.dp), tint = BlueSecondary)
+
+                state.reservations.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF0F7FF)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.EventBusy,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = BlueSecondary
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Aún no tienes ninguna reservación de tus estacionamientos",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray
+                                )
+                            )
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(text = "Aún no tienes ninguna reservación de tus estacionamientos", textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium, color = Color.Gray))
                     }
                 }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(state.reservations) { reservation ->
-                        ReservationOwnerCard(
-                            reservation = reservation,
-                            onAccept = {
-                                viewModel.updateStatus(
-                                    reservation.id,
-                                    ReservationStatus.CONFIRMED
-                                )
-                            },
-                            onDecline = {
-                                viewModel.updateStatus(
-                                    reservation.id,
-                                    ReservationStatus.CANCELLED
-                                )
-                            },
-                            onComplete = {
-                                viewModel.updateStatus(
-                                    reservation.id,
-                                    ReservationStatus.COMPLETED
-                                )
-                            },
-                            onViewDetails = { /* TODO */ }
-                        )
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(state.reservations) { reservation ->
+                            ReservationOwnerCard(
+                                reservation = reservation,
+                                onConfirmCashPayment = {
+                                    viewModel.confirmCashPayment(reservation.id)
+                                },
+                                onCheckIn = {
+                                    viewModel.checkIn(reservation.id)
+                                },
+                                onCheckOut = {
+                                    viewModel.checkOut(reservation.id)
+                                },
+                                onViewDetails = { }
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
         }

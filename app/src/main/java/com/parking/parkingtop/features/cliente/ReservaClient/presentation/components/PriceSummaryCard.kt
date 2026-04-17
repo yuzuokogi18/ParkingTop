@@ -24,6 +24,7 @@ import com.parking.parkingtop.ui.theme.TextPrimary
 @Composable
 fun PriceSummaryCard(
     hours: Int,
+    minutes: Int,
     baseCost: Double,
     additionalTime: Double,
     discounts: Double,
@@ -31,6 +32,14 @@ fun PriceSummaryCard(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
+
+        val durationText = when {
+            hours == 0 && minutes > 0  -> "${minutes}m"
+            hours > 0 && minutes == 0  -> "${hours}h"
+            hours > 0 && minutes > 0   -> "${hours}h ${minutes}m"
+            else -> "—"
+        }
+
         Text(
             text = "Resumen de Precios",
             style = MaterialTheme.typography.titleMedium.copy(
@@ -43,7 +52,7 @@ fun PriceSummaryCard(
 
         // Precio base
         PriceRow(
-            label = "Precio Base ($hours horas)",
+            label = "Precio Base ($durationText)",
             amount = baseCost
         )
 
