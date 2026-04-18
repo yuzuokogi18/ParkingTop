@@ -17,7 +17,6 @@ data class ReservationOwner(
 enum class ReservationStatus {
     PENDING,
     CONFIRMED,
-
     ACTIVE, // 🔥 o crea ACTIVE si quieres más fino
     CANCELLED,
     COMPLETED

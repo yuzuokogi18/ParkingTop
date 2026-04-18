@@ -1,4 +1,5 @@
 package com.parking.parkingtop.features.cliente.Perfil.presentation.components
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -26,13 +27,15 @@ import java.time.format.DateTimeFormatter
 fun ReservationProfileCard(
     reservation: Reservation,
     isCancelling: Boolean = false,
-    onCancel: (() -> Unit)? = null,   // null = no mostrar botón (historial)
+    onCancel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    var expanded        by remember { mutableStateOf(false) }
+    var expanded         by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
 
-    // ── Diálogo de confirmación ───────────────────────────────────────────────
+    // ✅ Solo "pending" puede cancelarse — confirmed, active no
+    val cancellable = reservation.status == "pending"
+
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
@@ -84,19 +87,14 @@ fun ReservationProfileCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ── Header siempre visible ────────────────────────────────────────
+            // ── Header ────────────────────────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Icon(
-                        Icons.Default.LocalParking,
-                        null,
-                        tint     = BlueSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Icon(Icons.Default.LocalParking, null, tint = BlueSecondary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         reservation.parkingLotName,
@@ -105,61 +103,51 @@ fun ReservationProfileCard(
                         maxLines = 1
                     )
                 }
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = statusColor.copy(alpha = 0.1f)
-                    ) {
+                    Surface(shape = RoundedCornerShape(6.dp), color = statusColor.copy(alpha = 0.1f)) {
                         Text(
                             statusLabel,
-                            fontSize = 11.sp,
-                            color    = statusColor,
+                            fontSize   = 11.sp,
+                            color      = statusColor,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        null,
-                        tint     = Color.Gray,
-                        modifier = Modifier.size(20.dp)
+                        null, tint = Color.Gray, modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
-            // Fecha rápida siempre visible
+            // ✅ Fecha + hora siempre visible
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                formatDateTime(reservation.startTime),
+                formatDateTimeFull(reservation.startTime),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
 
             // ── Detalle expandible ────────────────────────────────────────────
-            AnimatedVisibility(
-                visible = expanded,
-                enter   = expandVertically(),
-                exit    = shrinkVertically()
-            ) {
+            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
                     HorizontalDivider(color = Color(0xFFEEEEEE))
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    DetailRow(label = "Inicio",   value = formatDateTime(reservation.startTime))
-                    DetailRow(label = "Fin",      value = formatDateTime(reservation.endTime))
-                    DetailRow(label = "Total",    value = "$${reservation.totalCost}")
+                    DetailRow(label = "Inicio", value = formatDateTimeFull(reservation.startTime))
+                    DetailRow(label = "Fin",    value = formatDateTimeFull(reservation.endTime))
+                    DetailRow(label = "Total",  value = "$${reservation.totalCost}")
 
-                    // ── Botón cancelar — solo para reservas activas/pendientes/confirmadas
-                    if (onCancel != null && reservation.status in listOf("pending", "confirmed", "active")) {
+                    // ✅ Solo muestra cancelar si status == "pending"
+                    if (onCancel != null && cancellable) {
                         Spacer(modifier = Modifier.height(12.dp))
                         if (isCancelling) {
                             Row(
-                                modifier          = Modifier.fillMaxWidth(),
+                                modifier              = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment     = Alignment.CenterVertically
                             ) {
                                 CircularProgressIndicator(
                                     modifier    = Modifier.size(18.dp),
@@ -181,12 +169,35 @@ fun ReservationProfileCard(
                                     1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
                                 )
                             ) {
-                                Icon(
-                                    Icons.Default.Cancel, null,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                Icon(Icons.Default.Cancel, null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Cancelar reserva", fontSize = 13.sp)
+                            }
+                        }
+                    }
+
+                    // ✅ Mensaje informativo cuando está confirmada (no cancelable)
+                    if (onCancel != null && reservation.status == "confirmed") {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFFF8E1)
+                        ) {
+                            Row(
+                                modifier          = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Info, null,
+                                    tint     = Color(0xFFFF9800),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "Reserva confirmada y pagada — no se puede cancelar",
+                                    fontSize = 12.sp,
+                                    color    = Color(0xFF795548)
+                                )
                             }
                         }
                     }
@@ -199,9 +210,7 @@ fun ReservationProfileCard(
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(
-        modifier              = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp),
+        modifier              = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
@@ -209,18 +218,23 @@ private fun DetailRow(label: String, value: String) {
     }
 }
 
+// ✅ Muestra fecha + hora: "15/04/2026 09:40 PM"
+fun formatDateTimeFull(dateTime: String): String {
+    return try {
+        val zdt     = ZonedDateTime.parse(dateTime, DateTimeFormatter.ISO_DATE_TIME)
+        val mxTime  = zdt.withZoneSameInstant(ZoneId.of("America/Mexico_City"))
+        mxTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a"))
+    } catch (e: Exception) {
+        dateTime
+    }
+}
+
+// Mantén formatDateTime para compatibilidad con otros usos
 fun formatDateTime(dateTime: String): String {
     return try {
-        val inputFormatter = DateTimeFormatter.ISO_DATE_TIME
-        val outputFormatter = DateTimeFormatter.ofPattern("hh:mm a")
-
-        // Parsear como ZonedDateTime (detecta zona si viene en el string)
-        val zonedDateTime = ZonedDateTime.parse(dateTime, inputFormatter)
-
-        // Convertir a zona horaria de México
-        val mexicoTime = zonedDateTime.withZoneSameInstant(ZoneId.of("America/Mexico_City"))
-
-        mexicoTime.format(outputFormatter)
+        val zdt     = ZonedDateTime.parse(dateTime, DateTimeFormatter.ISO_DATE_TIME)
+        val mxTime  = zdt.withZoneSameInstant(ZoneId.of("America/Mexico_City"))
+        mxTime.format(DateTimeFormatter.ofPattern("hh:mm a"))
     } catch (e: Exception) {
         dateTime
     }

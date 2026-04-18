@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.messaging.FirebaseMessaging
 import com.parking.parkingtop.core.datastore.TokenDataStore
+import com.parking.parkingtop.core.di.navigation.DeepLinkHandler
 import com.parking.parkingtop.core.hardware.data.FingerprintManager
 import com.parking.parkingtop.features.login.domain.usecases.LoginUseCase
 import com.parking.parkingtop.features.login.domain.usecases.GetMySubscriptionUseCase
@@ -36,6 +37,7 @@ class LoginViewModel @Inject constructor(
 
     private val _state = mutableStateOf(LoginState())
     val state: State<LoginState> = _state
+    @Inject lateinit var deepLinkHandler: DeepLinkHandler
 
     init {
         _state.value = _state.value.copy(
@@ -67,6 +69,7 @@ class LoginViewModel @Inject constructor(
                             role  = authResult.user.role
                         )
                     } else {
+                        deepLinkHandler.updateAuthState(loggedIn = true, role = authResult.user.role)
                         _state.value = _state.value.copy(
                             isLoading = false,
                             isSuccess = true,
@@ -85,23 +88,15 @@ class LoginViewModel @Inject constructor(
     }
 
     private suspend fun checkOwnerSubscription(token: String, role: String) {
-
-        android.util.Log.d("LOGIN_DEBUG", "Token enviado: Bearer $token")
-
         val subscriptionResult = getMySubscriptionUseCase("Bearer $token")
 
         subscriptionResult.fold(
             onSuccess = { subscription ->
-
-                android.util.Log.d("LOGIN_DEBUG", "Suscripción recibida: $subscription")
-                android.util.Log.d("LOGIN_DEBUG", "Status: ${subscription?.status}")
-                android.util.Log.d("LOGIN_DEBUG", "Plan: ${subscription?.plan}")
-
                 val isActive = subscription?.status == "active" ||
                         subscription?.status == "trialing"
 
-                android.util.Log.d("LOGIN_DEBUG", "isActive: $isActive")
-
+                // En onSuccess y onFailure — usar el parámetro `role` que ya tienes
+                deepLinkHandler.updateAuthState(loggedIn = true, role = role)
                 _state.value = _state.value.copy(
                     isLoading             = false,
                     isSuccess             = true,
@@ -110,7 +105,7 @@ class LoginViewModel @Inject constructor(
                 )
             },
             onFailure = { error ->
-                android.util.Log.e("LOGIN_DEBUG", "Error al obtener suscripción: ${error.message}")
+                deepLinkHandler.updateAuthState(loggedIn = true, role = role)
                 _state.value = _state.value.copy(
                     isLoading             = false,
                     isSuccess             = true,
@@ -144,18 +139,15 @@ class LoginViewModel @Inject constructor(
     }
 
     fun onBiometricSuccess() {
-
         _state.value = _state.value.copy(showBiometricPrompt = false)
 
         viewModelScope.launch {
-
             val token = tokenDataStore.accessToken.first()
 
             if (token != null) {
-                _state.value = _state.value.copy(
-                    isSuccess = true,
-                    role      = "customer"
-                )
+                // El biométrico siempre es cliente
+                deepLinkHandler.updateAuthState(loggedIn = true, role = "customer")
+                _state.value = _state.value.copy(isSuccess = true, role = "customer")
             } else {
                 _state.value = _state.value.copy(
                     error = "No hay sesión guardada. Inicia sesión primero."

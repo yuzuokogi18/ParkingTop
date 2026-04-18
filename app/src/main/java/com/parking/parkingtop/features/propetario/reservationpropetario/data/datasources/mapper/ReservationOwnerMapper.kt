@@ -39,7 +39,7 @@ fun ReservationDto.toDomain(): ReservationOwner {
         status        = when (status.lowercase()) {
             "pending"   -> ReservationStatus.PENDING
             "confirmed" -> ReservationStatus.CONFIRMED
-            "active"    -> ReservationStatus.CONFIRMED // 🔥 o crea ACTIVE si quieres más fino
+            "active"    -> ReservationStatus.ACTIVE // 🔥 o crea ACTIVE si quieres más fino
             "cancelled" -> ReservationStatus.CANCELLED
             "completed" -> ReservationStatus.COMPLETED
             else        -> ReservationStatus.PENDING
@@ -66,7 +66,7 @@ fun CheckInCheckOutResponse.toDomain(): ReservationOwner {
             "pending"   -> ReservationStatus.PENDING
             "confirmed" -> ReservationStatus.CONFIRMED
             "completed" -> ReservationStatus.COMPLETED
-            "active"    -> ReservationStatus.CONFIRMED // 🔥 o crea ACTIVE si quieres más fino"
+            "active"    -> ReservationStatus.ACTIVE // 🔥 o crea ACTIVE si quieres más fino"
             "cancelled" -> ReservationStatus.CANCELLED
             else        -> ReservationStatus.PENDING
         }

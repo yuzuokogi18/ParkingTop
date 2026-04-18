@@ -36,57 +36,62 @@ class ReservationOwnerViewModel @Inject constructor(
     }
 
     fun loadReservations(filter: String = _state.value.selectedFilter) {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, selectedFilter = filter)
+        // Capturar fuera del suspend block para evitar leer estado intermedio
+        val activeFilter = filter
+        val statusParam = when (activeFilter) {
+            "Pendientes"  -> "pending"
+            "Confirmadas" -> "confirmed"
+            "Canceladas"  -> "cancelled"
+            else          -> null
+        }
 
-            val statusParam = when (filter) {
-                "Pendientes"  -> "pending"
-                "Confirmadas" -> "confirmed"
-                "Canceladas"  -> "cancelled"
-                else          -> null
-            }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true, selectedFilter = activeFilter)
 
             getOwnerReservationsUseCase(status = statusParam).fold(
                 onSuccess = { reservations ->
-                    _state.value = _state.value.copy(isLoading = false, reservations = reservations)
+                    _state.value = _state.value.copy(
+                        isLoading    = false,
+                        reservations = reservations,
+                        error        = null
+                    )
                 },
                 onFailure = { error ->
-                    _state.value = _state.value.copy(isLoading = false, error = error.message)
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error     = error.message
+                    )
                 }
             )
         }
     }
 
     fun confirmCashPayment(id: String) {
+        val currentFilter = _state.value.selectedFilter
         viewModelScope.launch {
             confirmCashPaymentUseCase(id).fold(
-                onSuccess = { loadReservations() },
-                onFailure = { error ->
-                    _state.value = _state.value.copy(error = error.message)
-                }
+                onSuccess = { loadReservations(currentFilter) },
+                onFailure = { _state.value = _state.value.copy(error = it.message) }
             )
         }
     }
 
-
     fun checkIn(id: String) {
+        val currentFilter = _state.value.selectedFilter
         viewModelScope.launch {
             checkInUseCase(id).fold(
-                onSuccess = { loadReservations() },
-                onFailure = {
-                    _state.value = _state.value.copy(error = it.message)
-                }
+                onSuccess = { loadReservations(currentFilter) },
+                onFailure = { _state.value = _state.value.copy(error = it.message) }
             )
         }
     }
 
     fun checkOut(id: String) {
+        val currentFilter = _state.value.selectedFilter
         viewModelScope.launch {
             checkOutUseCase(id).fold(
-                onSuccess = { loadReservations() },
-                onFailure = {
-                    _state.value = _state.value.copy(error = it.message)
-                }
+                onSuccess = { loadReservations(currentFilter) },
+                onFailure = { _state.value = _state.value.copy(error = it.message) }
             )
         }
     }

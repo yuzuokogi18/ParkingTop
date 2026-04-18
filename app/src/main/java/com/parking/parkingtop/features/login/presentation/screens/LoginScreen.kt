@@ -36,9 +36,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.parking.parkingtop.core.di.navigation.DeepLinkHandler
 import com.parking.parkingtop.features.login.presentation.viewmodels.LoginViewModel
 import com.parking.parkingtop.ui.theme.BlueSecondary
 import com.parking.parkingtop.ui.theme.TextPrimary
+import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +53,6 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-
     val state by viewModel.state
     val activity = LocalActivity.current as FragmentActivity
 

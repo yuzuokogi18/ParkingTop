@@ -11,8 +11,9 @@ import javax.inject.Singleton
 @Singleton
 class DeepLinkHandler @Inject constructor() {
 
+    // En DeepLinkHandler
     private val _events = MutableSharedFlow<DeepLinkEvent>(
-        replay = 0,
+        replay = 1,               // ← era 0, ahora 1
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
@@ -25,9 +26,13 @@ class DeepLinkHandler @Inject constructor() {
     private val handledKeys = LinkedHashSet<String>()
     private val maxHandledKeys = 100
 
-    fun updateAuthState(loggedIn: Boolean) {
+    private var currentRole: String = ""
+
+    // Cambiar la firma de updateAuthState
+    fun updateAuthState(loggedIn: Boolean, role: String = "") {
         isLoggedIn = loggedIn
-        if (loggedIn) flushPendingEvent()
+        currentRole = role
+        if (loggedIn && role == "customer") flushPendingEvent()
     }
 
     fun handle(intent: Intent?): Boolean {
@@ -103,5 +108,32 @@ class DeepLinkHandler @Inject constructor() {
             val first = handledKeys.firstOrNull()
             if (first != null) handledKeys.remove(first)
         }
+    }
+
+    fun emitReviewEvent(
+        parkingLotId: String,
+        reservationId: String,
+        parkingName: String,
+        notificationId: String = ""
+    ) {
+        // ← AÑADIR: ignorar si el usuario activo es owner
+        if (currentRole == "owner") return
+
+        val dedupeKey = "$reservationId|${notificationId.ifBlank { "no-notification-id" }}"
+        if (handledKeys.contains(dedupeKey)) return
+        markHandled(dedupeKey)
+
+        val event = DeepLinkEvent.OpenReview(
+            parkingLotId  = parkingLotId,
+            reservationId = reservationId,
+            parkingName   = parkingName
+        )
+
+        if (isLoggedIn) _events.tryEmit(event) else pendingEvent = event
+    }
+
+    // En DeepLinkHandler
+    fun clearLastEvent() {
+        _events.resetReplayCache()
     }
 }

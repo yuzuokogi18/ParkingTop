@@ -52,8 +52,6 @@ fun AppNavigation() {
         deepLinkVm.handler.events.collect { event ->
             when (event) {
                 is DeepLinkEvent.OpenReview -> {
-                    // Si el usuario aún no está logueado, la ruta simplemente
-                    // no existe en el back-stack y la navegación es silenciosa.
                     navController.navigate(
                         AppRoutes.review(
                             parkingLotId  = event.parkingLotId,
@@ -61,6 +59,7 @@ fun AppNavigation() {
                             parkingName   = event.parkingName
                         )
                     )
+                    deepLinkVm.handler.clearLastEvent() // ← nuevo método
                 }
             }
         }
